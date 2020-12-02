@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">iiactest</string>
+    <string name="AccessibilityServiceDescription">声学成像仪二代 性能测试自动化工具</string>
+</resources>
