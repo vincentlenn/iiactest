@@ -11,10 +11,13 @@ import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.widget.addTextChangedListener
+import com.google.gson.Gson
 import com.iflytek.acptest.utils.ItestHelper
 import com.iflytek.acptest.utils.*
 import kotlinx.android.synthetic.main.activity_main.*
 import org.jetbrains.anko.toast
+import org.json.JSONArray
+import org.json.JSONObject
 import java.io.*
 import java.text.SimpleDateFormat
 import java.util.*
@@ -146,7 +149,7 @@ class MainActivity : AppCompatActivity() {
                             curTime = SimpleDateFormat("yyyy-MM-dd-HH-mm-ss", Locale.CHINA).format(Date())
                             changeItestDirName()
                             changeIflytekDirName()
-                            processData(i, startLv, endLv, findMainFreq(coreGroup))
+                            processData(i, startLv, endLv, findMainFreq(coreGroup), coreGroup)
                             i += 1
                         }
                         myHandler.sendEmptyMessage(0)
@@ -327,7 +330,7 @@ class MainActivity : AppCompatActivity() {
         return "Unknown"
     }
 
-    private fun processData(index: Int, startLv: Int, endLv: Int, freq: String) {
+    private fun processData(index: Int, startLv: Int, endLv: Int, freq: String, map: MutableMap<String, MutableMap<String, Int>>) {
 //        val simpleDateFormat = SimpleDateFormat("yyyy-MM-dd-HH-mm-ss", Locale.CHINA)
 //        curTime = simpleDateFormat.format(Date())
 //        changeItestDirName()
@@ -363,6 +366,9 @@ class MainActivity : AppCompatActivity() {
         }
 
         FileHandler.writeContents(rFileName, freq)
+
+        val obj = Gson().toJson(map)
+        FileHandler.writeContents(rFileName, obj.toString())
     }
 
     private fun isExternalStorageExist(): Boolean {
