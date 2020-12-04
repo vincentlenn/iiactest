@@ -18,6 +18,7 @@ import org.jetbrains.anko.toast
 import java.io.*
 import java.text.SimpleDateFormat
 import java.util.*
+import java.util.function.ToDoubleBiFunction
 
 
 class MainActivity : AppCompatActivity() {
@@ -102,14 +103,29 @@ class MainActivity : AppCompatActivity() {
                             FileHandler.logger("iTest begin to monitor.")
                             val startLv = examiner.batteryLevel(this@MainActivity)!!.toInt()
                             entryApp()
-                            try {
-                                sleep(duration)
-                            } catch (e: InterruptedException) {
-                                /**
-                                 * 线程sleep时被中断，sleep方法会抛出异常并清除中断标识位，然后执行后续代码
-                                 */
-                                FileHandler.logger("Target app threw an error at $i of $loop, let`s try again.")
-                                exceptionFlag = true
+//                            try {
+//                                sleep(duration)
+//                            } catch (e: InterruptedException) {
+//                                /**
+//                                 * 线程sleep时被中断，sleep方法会抛出异常并清除中断标识位，然后执行后续代码
+//                                 */
+//                                FileHandler.logger("Target app threw an error at $i of $loop, let`s try again.")
+//                                exceptionFlag = true
+//                            }
+                            val startTime = SystemClock.elapsedRealtime()
+                            var coreGroup = mapCpu()
+                            while ((SystemClock.elapsedRealtime() - startTime) < duration) {
+                                sampleCpuRate(coreGroup)
+                                try {
+                                    sleep(1000)
+                                } catch (e: InterruptedException) {
+                                    /**
+                                     * 线程sleep时被中断，sleep方法会抛出异常并清除中断标识位，然后执行后续代码
+                                     */
+                                    FileHandler.logger("Target app threw an error at $i of $loop, let`s try again.")
+                                    exceptionFlag = true
+                                    break
+                                }
                             }
                             itestManager.monitorFinish()
                             if (!record_not_begin) {
@@ -125,11 +141,12 @@ class MainActivity : AppCompatActivity() {
                                 continue@loop
                             }
                             FileHandler.logger("Job($i of $loop) is done.")
+                            println(coreGroup)
                             FileHandler.copyDirectory(itest_data_path, itest_store_path)
                             curTime = SimpleDateFormat("yyyy-MM-dd-HH-mm-ss", Locale.CHINA).format(Date())
                             changeItestDirName()
                             changeIflytekDirName()
-                            processData(i, startLv, endLv)
+                            processData(i, startLv, endLv, findMainFreq(coreGroup))
                             i += 1
                         }
                         myHandler.sendEmptyMessage(0)
@@ -310,7 +327,7 @@ class MainActivity : AppCompatActivity() {
         return "Unknown"
     }
 
-    private fun processData(index: Int, BTStart: Int, BTEnd: Int) {
+    private fun processData(index: Int, startLv: Int, endLv: Int, freq: String) {
 //        val simpleDateFormat = SimpleDateFormat("yyyy-MM-dd-HH-mm-ss", Locale.CHINA)
 //        curTime = simpleDateFormat.format(Date())
 //        changeItestDirName()
@@ -334,7 +351,7 @@ class MainActivity : AppCompatActivity() {
             "不录像"
         }
         val scenario = "本次测试场景配置: $frequencyStatus, $spectrogramStatus, $recordStatus."
-        FileHandler.writeContents(rFileName, "$scenario\nThis is the $index of $loop. 开始电量: $BTStart, 结束电量: $BTEnd.")
+        FileHandler.writeContents(rFileName, "$scenario\nThis is the $index of $loop. 开始电量: $startLv, 结束电量: $endLv.")
 
         if (calEngineTime.cal(rFileName, log_path, curTime)) {
             Log.i("Data processor", "Calculate engine time is done.")
@@ -344,6 +361,8 @@ class MainActivity : AppCompatActivity() {
             Log.i("Data processor", "Calculate performance data is done.")
             FileHandler.logger("Calculate performance data is done.")
         }
+
+        FileHandler.writeContents(rFileName, freq)
     }
 
     private fun isExternalStorageExist(): Boolean {
@@ -443,6 +462,7 @@ class MainActivity : AppCompatActivity() {
         viewShown = false
     }
 
+    // 恢复默认测试配置
     private fun resetBtnSetting() {
         frequency_default.isChecked = true
         frequency_define.isChecked = false
@@ -453,6 +473,36 @@ class MainActivity : AppCompatActivity() {
         record_off.isChecked = true
         record_on.isChecked = false
         record_video = false
+    }
+
+    private fun mapCpu(): MutableMap<String, MutableMap<String, Int>> {
+        var cores = mutableMapOf<String, MutableMap<String, Int>>()
+        val br = BufferedReader(InputStreamReader(FileInputStream(File("/sys/devices/system/cpu/present"))))
+        val line = br.readLine()
+        val size = line.last().toString().toInt()
+        for (i in 0..size) {
+            cores["cpu$i"] = mutableMapOf()
+        }
+        return cores
+    }
+
+    private fun sampleCpuRate(cores: MutableMap<String, MutableMap<String, Int>>) {
+        cores.forEach { (t, u) ->
+            val freq = BufferedReader(InputStreamReader(FileInputStream(File("/sys/devices/system/cpu/$t/cpufreq/scaling_cur_freq")))).readLine()
+            if (freq in u.keys) {
+                u[freq] = u[freq]!! + 1
+            } else {
+                u[freq] = 1
+            }
+        }
+    }
+
+    private fun findMainFreq(core: MutableMap<String, MutableMap<String, Int>>): String {
+        var line = "\n[CPU主要运行频率]\n"
+        core.forEach { (t, u) ->
+            line += "$t: ${u.entries.sortedByDescending { it.value }[0].key}\n"
+        }
+        return line
     }
 
     val myHandler = object : Handler() {
