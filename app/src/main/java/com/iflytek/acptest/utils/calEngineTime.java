@@ -35,8 +35,13 @@ public class calEngineTime {
          * cb_sp: 时频图回调耗时
          *
          * 应用android日志中打印的耗时指标:
+         * @一代版本
          * generate: 热力图生成耗时
          * show: 热力图渲染耗时
+         *
+         * @二代版本
+         * generate: 热力图生成耗时
+         * matrix: 声强矩阵预处理耗时
          */
         String engine[][] = {
                 {"native", "wait"},
@@ -46,7 +51,7 @@ public class calEngineTime {
                 {"native", "cb_im"},
                 {"native", "cb_sp"},
                 {"android", "generate"},
-                {"android", "show"}
+                {"android", "matrix"}
         };
 
         String packages[][] = {
@@ -108,15 +113,34 @@ public class calEngineTime {
                                 } catch (NumberFormatException e) {
                                     FileHandler.logger("Exception thrown when parsing data to Int: " + e);
                                 }
-                            } else if (s.contains(title + " heat map time")) {
+                            } else if (s.contains("heat map " + title + " time")) {
                                 int costStartInd = s.lastIndexOf(":");
-//                                int costEndInd = s.lastIndexOf("m");
+                                int costEndInd = s.lastIndexOf("m");
                                 if (costStartInd < 0 || costStartInd >= s.length()) {
                                     FileHandler.writeContents(file, "Warning: Invalid cost log found: " + s);
                                     s = bf.readLine();
                                     continue;
                                 }
-                                String temp = s.substring(costStartInd + 2);
+                                String temp = s.substring(costStartInd + 2, costEndInd);
+                                try {
+                                    int i = Integer.parseInt(temp);
+                                    max = Math.max(max, i);
+                                    min = Math.min(min, i);
+                                    count++;
+                                    total += i;
+                                } catch (NumberFormatException e) {
+                                    System.out.println("Exception thrown  :" + e);
+                                    FileHandler.logger("Exception thrown when parsing data to Int: " + e);
+                                }
+                            } else if (s.contains("intensity " + title + " preprocess time")) {
+                                int costStartInd = s.lastIndexOf(":");
+                                int costEndInd = s.lastIndexOf("m");
+                                if (costStartInd < 0 || costStartInd >= s.length()) {
+                                    FileHandler.writeContents(file, "Warning: Invalid cost log found: " + s);
+                                    s = bf.readLine();
+                                    continue;
+                                }
+                                String temp = s.substring(costStartInd + 2, costEndInd);
                                 try {
                                     int i = Integer.parseInt(temp);
                                     max = Math.max(max, i);
@@ -137,20 +161,24 @@ public class calEngineTime {
             if (min == Integer.MAX_VALUE && max == Integer.MIN_VALUE) {
                 FileHandler.writeContents(file, title + ": Not found");
             } else {
+                String res = "";
                 if (path.contains("native")) {
-                    String res = title +
+                    res = title +
                             ": ENGINE TIME CONSUME: min: " + (float) min / 1000 + ", max: " + (float) max / 1000 +
                             ", count: " + count + ", average: " + (float) total /
                             (float) count / 1000;
-                    FileHandler.writeContents(file, res);
-                } else {
-                    // 一代声学成像仪应用：热力图生产耗时的统计单位为 ms
-                    String res = title +
+                } else if (title == "generate") {
+                    res = title +
                             ": HEATMAP TIME CONSUME: min: " + (float) min + ", max: " + (float) max +
                             ", count: " + count + ", average: " + (float) total /
                             (float) count;
-                    FileHandler.writeContents(file, res);
+                } else {
+                    res = title +
+                            ": PREPROCESS TIME CONSUME: min: " + (float) min + ", max: " + (float) max +
+                            ", count: " + count + ", average: " + (float) total /
+                            (float) count;
                 }
+                FileHandler.writeContents(file, res);
             }
         }
 
