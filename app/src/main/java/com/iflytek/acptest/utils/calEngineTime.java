@@ -113,7 +113,7 @@ public class calEngineTime {
                                 } catch (NumberFormatException e) {
                                     FileHandler.logger("Exception thrown when parsing data to Int: " + e);
                                 }
-                            } else if (s.contains("heat map " + title + " time")) {
+                            } else if (s.contains("heat map " + title + " time cost")) {
                                 int costStartInd = s.lastIndexOf(":");
                                 int costEndInd = s.lastIndexOf("m");
                                 if (costStartInd < 0 || costStartInd >= s.length()) {
@@ -132,7 +132,7 @@ public class calEngineTime {
                                     System.out.println("Exception thrown  :" + e);
                                     FileHandler.logger("Exception thrown when parsing data to Int: " + e);
                                 }
-                            } else if (s.contains("intensity " + title + " preprocess time")) {
+                            } else if (s.contains("intensity " + title + " preprocess time cost")) {
                                 int costStartInd = s.lastIndexOf(":");
                                 int costEndInd = s.lastIndexOf("m");
                                 if (costStartInd < 0 || costStartInd >= s.length()) {
