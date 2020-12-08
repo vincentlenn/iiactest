@@ -42,6 +42,9 @@ public class calEngineTime {
          * @二代版本
          * generate: 热力图生成耗时
          * matrix: 声强矩阵预处理耗时
+         * Rate of audio data receiver: 音频数据接收速率
+         * engine audio data lost rate: 引擎处理过慢时，音频缓冲区的溢出率
+         * Heat map original data lost rate: 热力图丢帧率
          */
         String engine[][] = {
                 {"native", "wait"},
@@ -57,6 +60,12 @@ public class calEngineTime {
         String packages[][] = {
                 {"native", "lost"},
                 {"native", "discard"}
+        };
+
+        String rates[][] = {
+                {"android", "Rate of audio data receiver"},
+                {"android", "engine audio data lost rate"},
+                {"android", "Heat map original data lost rate"}
         };
 
         FileHandler.writeContents(file, "\n[耗时指标]:");
@@ -75,8 +84,78 @@ public class calEngineTime {
             cal_package_lost(Path2, keyword, file);
         }
 
-        Log.i(null, "calculate engine time done");
+        for (String item3[] : rates) {
+            String category3 = item3[0];
+            String keyline = item3[1];
+            String Path3 = target_log + File.separator + category3 + "-" + timestamp;
+            cal_rates(Path3, keyline, file);
+        }
+
+        Log.i(null, "calculate business data done");
         return true;
+    }
+
+    private static void cal_rates(String path3, String keyline, String file) throws Exception {
+        float max = Float.MIN_VALUE;
+        float min = Float.MAX_VALUE;
+        float total = 0;
+        int count = 0;
+        File files = new File(path3);
+        File[] fs = files.listFiles();
+        if (fs == null) {
+            FileHandler.writeContents(file, "No files under the path: " + path3);
+        }
+        else {
+            for (File f : fs) {
+                try (BufferedReader bf = new BufferedReader(new FileReader(f))) {
+                    String s = bf.readLine();
+                    while (s != null) {
+                        if (!s.equals("\n") && !s.isEmpty()) {
+                            if (s.contains(keyline)) {
+                                String temp = "";
+                                if (keyline == "Rate of audio data receiver") {
+                                    int costStartInd = s.lastIndexOf("is ") + 3;
+                                    int costEndInd = s.lastIndexOf("MB/s");
+                                    if (costStartInd < 0 || costEndInd < 0 || costEndInd <= costStartInd) {
+                                        FileHandler.writeContents(file, "Warning: Invalid cost log found: " + s);
+                                        s = bf.readLine();
+                                        continue;
+                                    }
+                                    temp = s.substring(costStartInd, costEndInd);
+                                } else {
+                                    int costStartInd = s.lastIndexOf("is ") + 3;
+                                    if (costStartInd < 0 || costStartInd >= s.length()) {
+                                        FileHandler.writeContents(file, "Warning: Invalid cost log found: " + s);
+                                        s = bf.readLine();
+                                        continue;
+                                    }
+                                    temp = s.substring(costStartInd);
+                                }
+                                try {
+                                    float i = Float.parseFloat(temp);
+                                    max = Math.max(max, i);
+                                    min = Math.min(min, i);
+                                    count++;
+                                    total += i;
+                                } catch (NumberFormatException e) {
+                                    FileHandler.logger("Exception thrown when parsing data to Float: " + e);
+                                }
+                            }
+                        }
+                        s = bf.readLine();
+                    }
+                }
+            }
+
+            if (min == Integer.MAX_VALUE && max == Integer.MIN_VALUE) {
+                FileHandler.writeContents(file, keyline + ": Not found");
+            } else {
+                String res = keyline +
+                        ": " + min + ", max: " + max +
+                        ", count: " + count + ", average: " + total / (float)count;
+                FileHandler.writeContents(file, res);
+            }
+        }
     }
 
     public static void cal_engine_time(String path, String title, String file) throws Exception{
@@ -115,8 +194,8 @@ public class calEngineTime {
                                 }
                             } else if (s.contains("heat map " + title + " time cost")) {
                                 int costStartInd = s.lastIndexOf(":");
-                                int costEndInd = s.lastIndexOf("m");
-                                if (costStartInd < 0 || costStartInd >= s.length()) {
+                                int costEndInd = s.lastIndexOf("ms");
+                                if (costStartInd < 0 || costEndInd < 0 || costStartInd >= s.length()) {
                                     FileHandler.writeContents(file, "Warning: Invalid cost log found: " + s);
                                     s = bf.readLine();
                                     continue;
@@ -134,8 +213,8 @@ public class calEngineTime {
                                 }
                             } else if (s.contains("intensity " + title + " preprocess time cost")) {
                                 int costStartInd = s.lastIndexOf(":");
-                                int costEndInd = s.lastIndexOf("m");
-                                if (costStartInd < 0 || costStartInd >= s.length()) {
+                                int costEndInd = s.lastIndexOf("ms");
+                                if (costStartInd < 0 || costEndInd < 0 || costStartInd >= s.length()) {
                                     FileHandler.writeContents(file, "Warning: Invalid cost log found: " + s);
                                     s = bf.readLine();
                                     continue;
