@@ -151,7 +151,7 @@ public class calEngineTime {
                 FileHandler.writeContents(file, keyline + ": Not found");
             } else {
                 String res = keyline +
-                        ": " + min + ", max: " + max +
+                        ": min: " + min + ", max: " + max +
                         ", count: " + count + ", average: " + total / (float)count;
                 FileHandler.writeContents(file, res);
             }
