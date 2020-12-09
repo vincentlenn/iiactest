@@ -96,9 +96,9 @@ public class calEngineTime {
     }
 
     private static void cal_rates(String path3, String keyline, String file) throws Exception {
-        float max = Float.MIN_VALUE;
+        float max = 0f;
         float min = Float.MAX_VALUE;
-        float total = 0;
+        float total = 0f;
         int count = 0;
         File files = new File(path3);
         File[] fs = files.listFiles();
