@@ -212,7 +212,7 @@ public class calEngineTime {
                                         min = Math.min(min, i);
                                         count++;
                                         total += i;
-                                    } else if (s.contains("interval")) {
+                                    } else {
                                         max_inv = Math.max(max_inv, i);
                                         min_inv = Math.min(min_inv, i);
                                         count_inv++;
@@ -238,7 +238,7 @@ public class calEngineTime {
                                         min = Math.min(min, i);
                                         count++;
                                         total += i;
-                                    } else if (s.contains("interval")) {
+                                    } else {
                                         max_inv = Math.max(max_inv, i);
                                         min_inv = Math.min(min_inv, i);
                                         count_inv++;
@@ -255,34 +255,56 @@ public class calEngineTime {
                 }
             }
 
-            if (min == Integer.MAX_VALUE && max == Integer.MIN_VALUE) {
-                FileHandler.writeContents(file, title + " heat map time cost: Not found");
-            } else if (min_inv == Integer.MAX_VALUE && max_inv == Integer.MIN_VALUE) {
-                FileHandler.writeContents(file, title + " heat map time interval: Not found");
-            } else {
-                String res = "";
-                if (path.contains("native")) {
-                    res = title +
-                            ": ENGINE TIME CONSUME: min: " + (float) min / 1000 + ", max: " + (float) max / 1000 +
-                            ", count: " + count + ", average: " + (float) total /
-                            (float) count / 1000;
-                } else if (title == "generate") {
-                    res = title +
-                            ": HEATMAP TIME COST: min: " + (float) min + ", max: " + (float) max +
-                            ", count: " + count + ", average: " + (float) total /
-                            (float) count + "\n" + title + ": HEATMAP TIME INTERVAL: min: " + (float) min_inv +
-                            ", max: " + (float) max_inv + ", count: " + count_inv + ", average: " +
-                            (float) total_inv / (float) count_inv;
+            String res = "";
+            if (path.contains("native")) {
+                if (min == Integer.MAX_VALUE && max == Integer.MIN_VALUE) {
+                    res = title + " cost time: Not found";
                 } else {
                     res = title +
+                                ": ENGINE TIME CONSUME: min: " + (float) min / 1000 + ", max: " + (float) max / 1000 +
+                                ", count: " + count + ", average: " + (float) total /
+                                (float) count / 1000;
+                }
+            } else if (title == "generate") {
+                String res1 = "";
+                String res2 = "";
+                if (min == Integer.MAX_VALUE && max == Integer.MIN_VALUE) {
+                    res1 = title + " cost time: Not found";
+                } else {
+                    res1 = title +
+                                ": HEATMAP TIME COST: min: " + (float) min + ", max: " + (float) max +
+                                ", count: " + count + ", average: " + (float) total /
+                                (float) count;
+                }
+                if (min_inv == Integer.MAX_VALUE && max_inv == Integer.MIN_VALUE) {
+                    res2 = title + " interval time: Not found";
+                } else {
+                    res2 = title + ": HEATMAP TIME INTERVAL: min: " + (float) min_inv +
+                                ", max: " + (float) max_inv + ", count: " + count_inv + ", average: " +
+                                (float) total_inv / (float) count_inv;
+                }
+                res = res1 + "\n" + res2;
+            } else {
+                String res1 = "";
+                String res2 = "";
+                if (min == Integer.MAX_VALUE && max == Integer.MIN_VALUE) {
+                    res1 = title + " cost time: Not found";
+                } else {
+                    res1 = title +
                             ": PREPROCESS TIME COST: min: " + (float) min + ", max: " + (float) max +
                             ", count: " + count + ", average: " + (float) total /
-                            (float) count + "\n" + title + ": PREPROCESS TIME INTERVAL: min: " + (float) min_inv +
+                            (float) count;
+                }
+                if (min_inv == Integer.MAX_VALUE && max_inv == Integer.MIN_VALUE) {
+                    res2 = title + " interval time: Not found";
+                } else {
+                    res2 = title + ": PREPROCESS TIME INTERVAL: min: " + (float) min_inv +
                             ", max: " + (float) max_inv + ", count: " + count_inv + ", average: " +
                             (float) total_inv / (float) count_inv;
                 }
-                FileHandler.writeContents(file, res);
+                res = res1 + "\n" + res2;
             }
+            FileHandler.writeContents(file, res);
         }
 
     }
