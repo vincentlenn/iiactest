@@ -40,8 +40,8 @@ public class calEngineTime {
          * show: 热力图渲染耗时
          *
          * @二代版本
-         * generate: 热力图生成耗时
-         * matrix: 声强矩阵预处理耗时
+         * generate: 热力图生成耗时/间隔
+         * matrix: 声强矩阵预处理耗时/间隔
          * Rate of audio data receiver: 音频数据接收速率
          * engine audio data lost rate: 引擎处理过慢时，音频缓冲区的溢出率
          * Heat map original data lost rate: 热力图丢帧率
@@ -163,6 +163,10 @@ public class calEngineTime {
         int min = Integer.MAX_VALUE;
         long total = 0;
         int count = 0;
+        int max_inv = Integer.MIN_VALUE;
+        int min_inv = Integer.MAX_VALUE;
+        long total_inv = 0;
+        int count_inv = 0;
         File files = new File(path);
         File[] fs = files.listFiles();
         if (fs == null) {
@@ -192,7 +196,7 @@ public class calEngineTime {
                                 } catch (NumberFormatException e) {
                                     FileHandler.logger("Exception thrown when parsing data to Int: " + e);
                                 }
-                            } else if (s.contains("heat map " + title + " time cost")) {
+                            } else if (s.contains("heat map " + title)) {
                                 int costStartInd = s.lastIndexOf(":");
                                 int costEndInd = s.lastIndexOf("ms");
                                 if (costStartInd < 0 || costEndInd < 0 || costStartInd >= s.length()) {
@@ -203,15 +207,22 @@ public class calEngineTime {
                                 String temp = s.substring(costStartInd + 2, costEndInd);
                                 try {
                                     int i = Integer.parseInt(temp);
-                                    max = Math.max(max, i);
-                                    min = Math.min(min, i);
-                                    count++;
-                                    total += i;
+                                    if (s.contains("cost")) {
+                                        max = Math.max(max, i);
+                                        min = Math.min(min, i);
+                                        count++;
+                                        total += i;
+                                    } else if (s.contains("interval")) {
+                                        max_inv = Math.max(max_inv, i);
+                                        min_inv = Math.min(min_inv, i);
+                                        count_inv++;
+                                        total_inv += i;
+                                    }
                                 } catch (NumberFormatException e) {
                                     System.out.println("Exception thrown  :" + e);
                                     FileHandler.logger("Exception thrown when parsing data to Int: " + e);
                                 }
-                            } else if (s.contains("intensity " + title + " preprocess time cost")) {
+                            } else if (s.contains("intensity " + title)) {
                                 int costStartInd = s.lastIndexOf(":");
                                 int costEndInd = s.lastIndexOf("ms");
                                 if (costStartInd < 0 || costEndInd < 0 || costStartInd >= s.length()) {
@@ -222,10 +233,17 @@ public class calEngineTime {
                                 String temp = s.substring(costStartInd + 2, costEndInd);
                                 try {
                                     int i = Integer.parseInt(temp);
-                                    max = Math.max(max, i);
-                                    min = Math.min(min, i);
-                                    count++;
-                                    total += i;
+                                    if (s.contains("cost")) {
+                                        max = Math.max(max, i);
+                                        min = Math.min(min, i);
+                                        count++;
+                                        total += i;
+                                    } else if (s.contains("interval")) {
+                                        max_inv = Math.max(max_inv, i);
+                                        min_inv = Math.min(min_inv, i);
+                                        count_inv++;
+                                        total_inv += i;
+                                    }
                                 } catch (NumberFormatException e) {
                                     System.out.println("Exception thrown  :" + e);
                                     FileHandler.logger("Exception thrown when parsing data to Int: " + e);
@@ -238,7 +256,9 @@ public class calEngineTime {
             }
 
             if (min == Integer.MAX_VALUE && max == Integer.MIN_VALUE) {
-                FileHandler.writeContents(file, title + ": Not found");
+                FileHandler.writeContents(file, title + " heat map time cost: Not found");
+            } else if (min_inv == Integer.MAX_VALUE && max_inv == Integer.MIN_VALUE) {
+                FileHandler.writeContents(file, title + " heat map time interval: Not found");
             } else {
                 String res = "";
                 if (path.contains("native")) {
@@ -248,14 +268,18 @@ public class calEngineTime {
                             (float) count / 1000;
                 } else if (title == "generate") {
                     res = title +
-                            ": HEATMAP TIME CONSUME: min: " + (float) min + ", max: " + (float) max +
+                            ": HEATMAP TIME COST: min: " + (float) min + ", max: " + (float) max +
                             ", count: " + count + ", average: " + (float) total /
-                            (float) count;
+                            (float) count + "\n" + title + ": HEATMAP TIME INTERVAL: min: " + (float) min_inv +
+                            ", max: " + (float) max_inv + ", count: " + count_inv + ", average: " +
+                            (float) total_inv / (float) count_inv;
                 } else {
                     res = title +
-                            ": PREPROCESS TIME CONSUME: min: " + (float) min + ", max: " + (float) max +
+                            ": PREPROCESS TIME COST: min: " + (float) min + ", max: " + (float) max +
                             ", count: " + count + ", average: " + (float) total /
-                            (float) count;
+                            (float) count + "\n" + title + ": PREPROCESS TIME INTERVAL: min: " + (float) min_inv +
+                            ", max: " + (float) max_inv + ", count: " + count_inv + ", average: " +
+                            (float) total_inv / (float) count_inv;
                 }
                 FileHandler.writeContents(file, res);
             }
