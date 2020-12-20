@@ -3,6 +3,7 @@ package com.iflytek.acptest
 import android.accessibilityservice.AccessibilityService
 import android.annotation.SuppressLint
 import android.content.Intent
+import android.util.Log
 import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
 import com.iflytek.acptest.MainActivity.Companion.ACTION
@@ -19,11 +20,13 @@ import com.iflytek.acptest.MainActivity.Companion.spectrogram_btn_id
 import com.iflytek.acptest.MainActivity.Companion.spectrogram_btn_isON
 import com.iflytek.acptest.MainActivity.Companion.viewShown
 import com.iflytek.acptest.utils.FileHandler
+import org.jetbrains.anko.toast
 
 
 class RobService : AccessibilityService() {
   @SuppressLint("SwitchIntDef")
   override fun onAccessibilityEvent(event: AccessibilityEvent) {
+//      Log.i("ACCESSIBILITY", "$event")
     when (event.eventType) {
         AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED -> {
 //                Log.i("ACCESSIBILITY", "$event")
@@ -80,6 +83,10 @@ class RobService : AccessibilityService() {
         AccessibilityEvent.TYPE_VIEW_CLICKED -> {
 //                Log.i("ACCESSIBILITY", "$event")
             FileHandler.logger("${event.text} is clicked.")
+            if (event.text.toString().contains("频率范围：")) {
+//                execCmd("input keyevent --longpress 135")
+            }
+
         }
         AccessibilityEvent.TYPE_NOTIFICATION_STATE_CHANGED -> {
 //                Log.i("ACCESSIBILITY", "$event,\neventType:${event.eventType}")
@@ -90,7 +97,7 @@ class RobService : AccessibilityService() {
 
   private fun execCmd(cmd: String) {
     Runtime.getRuntime().exec(cmd)
-    FileHandler.logger("Simulate to long press Shoot.")
+    FileHandler.logger("Simulate to take photo/video.")
   }
 
   private fun handleNotification(event: AccessibilityEvent) {

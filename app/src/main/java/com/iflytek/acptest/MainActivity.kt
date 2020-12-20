@@ -7,9 +7,11 @@ import android.os.*
 import android.os.SystemClock.sleep
 import android.text.TextUtils
 import android.util.Log
+import android.widget.TabHost
 import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.isVisible
 import androidx.core.widget.addTextChangedListener
 import com.google.gson.Gson
 import com.iflytek.acptest.utils.ItestHelper
@@ -19,6 +21,7 @@ import org.jetbrains.anko.toast
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.*
+import java.lang.ArithmeticException
 import java.text.SimpleDateFormat
 import java.util.*
 import java.util.function.ToDoubleBiFunction
@@ -33,6 +36,11 @@ class MainActivity : AppCompatActivity() {
         
         setContentView(R.layout.activity_main)
 //        MyActivityUI().setContentView(this@MainActivity)
+        val tab = findViewById<TabHost>(android.R.id.tabhost)
+        tab.setup()
+        tab.addTab(tab.newTabSpec("tab1").setIndicator("性能指标", null).setContent(R.id.tab1))
+        tab.addTab(tab.newTabSpec("tab2").setIndicator("冷启动时间", null).setContent(R.id.tab2))
+
         findViewById<TextView>(R.id.pck_name).text = pkgName
         findViewById<TextView>(R.id.pck_version).text = getPkgVer(pkgName)
         findViewById<TextView>(R.id.android_version).text = Build.VERSION.RELEASE
@@ -221,32 +229,82 @@ class MainActivity : AppCompatActivity() {
                 toast("当前电量$batteryLevel%")
             }
 
-            loop = if (TextUtils.isEmpty(loop_setting.text)) {
-                loop_setting.hint.toString().toInt()
-            } else {
-                loop_setting.text.toString().toInt()
-            }
-            duration_bar.requestFocus()
-            var i = 0
-            while (i < loop) {
-                resetBtnStatus()
-                frequency_btn_isON = true
-                val t = object :Thread() {
-                    override fun run() {
-                        super.run()
-                        println("Round $i: start the app")
-                        entryApp()
-                        SystemClock.sleep(30000)
-                        println("time out now")
-                        cmdKill()
-                    }
+            val p = Runtime.getRuntime().exec("dalvikvm -cp /sdcard/start.dex Assist showLog")
+            val reader = BufferedReader(InputStreamReader(p.inputStream))
+            var line = ""
+            while (true) {
+                line = reader.readLine()
+                if (line == null) {
+                    break
                 }
-                t.start()
-                while (t.isAlive) {}
-                sleep(2000)
-                i += 1
+                FileHandler.logger(line)
             }
-            resetBtnSetting()
+            p.waitFor()
+            p.inputStream.close()
+            reader.close()
+            p.destroy()
+        }
+
+        version.setOnClickListener {
+            if (!testBtnOn) {
+                test_btn.isVisible = true
+                testBtnOn = true
+            } else {
+                test_btn.isVisible = false
+                testBtnOn = false
+            }
+        }
+
+        btn_method1.setOnClickListener {
+            it.isEnabled = false
+            if (am_result.text != null) {
+                am_result.text = ""
+            }
+            val tmpFile = op_path + File.separatorChar + "startup_temp_1.txt"
+            dltFile(tmpFile)
+            mkFile(tmpFile)
+            Runtime.getRuntime().exec("logcat -c")
+            Runtime.getRuntime().exec("logcat -f $tmpFile -b main -s ActivityManager:I")
+            for (i in 1..5) {
+                entryApp()
+                sleep(10000)
+                cmdKill()
+                sleep(1000)
+            }
+            Runtime.getRuntime().exec("logcat -c")
+            var re = ""
+            var count = 0
+            var sum = 0
+            val rf = BufferedReader(FileReader(File(tmpFile)))
+            var line = rf.readLine()
+            while (line != null) {
+                val l = line.substring(line.lastIndexOf(":") + 3, line.lastIndexOf("("))
+                re += "[${count + 1}]: $l"
+                var uptime = if (l.substring(0, l.lastIndexOf("ms")).contains("s")) {
+                    l.substring(0, l.indexOf("s")).toInt() * 1000 + l.substring(l.indexOf("s") +1, l.lastIndexOf("ms")).toInt()
+                } else {
+                    l.substring(0, l.lastIndexOf("ms")).toInt()
+                }
+                sum += uptime
+                count ++
+                line = rf.readLine()
+            }
+            try {
+                am_result.text = re + " [Average]: ${sum/count}ms"
+            } catch (e: ArithmeticException) {
+                am_result.text = re
+            }
+            it.isEnabled = true
+        }
+
+        btn_method2.setOnClickListener {
+            it.isEnabled = false
+            if (tt_result.text != null) {
+                tt_result.text = ""
+            }
+            val tmpFile = op_path + File.separatorChar + "startup_temp_2.txt"
+            dltFile(tmpFile)
+            mkFile(tmpFile)
         }
 
     }
@@ -401,6 +459,17 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun dltFile(fileName: String) {
+        val file = File(fileName)
+        try {
+            if (file.exists()) {
+                file.delete()
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
     private fun changeIflytekDirName() {
         val androidLog = log_path + File.separatorChar + "android"
         val nativeLog = log_path + File.separatorChar + "native"
@@ -547,12 +616,35 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         }
+    }
 
+    inner class MyThread(file: String): Thread() {
+        private val f = file
+        override fun run() {
+            super.run()
+            Runtime.getRuntime().exec("logcat -c")
+            val p = Runtime.getRuntime().exec("logcat -f $f -b main -s ActivityManager:I")
+//            val reader = BufferedReader(InputStreamReader(p.inputStream))
+//            var line = reader.readLine()
+//            while (!currentThread().isInterrupted) {
+//                if (line != null && line.contains("Displayed $pkgMainActivity")) {
+//                    Log.i("TEST", line)
+//                    val startup = line.substring(line.lastIndexOf(":") + 3, line.lastIndexOf("("))
+//                    FileHandler.writeContents(f, startup)
+//                }
+//                line = reader.readLine()
+//            }
+            p.waitFor()
+            p.inputStream.close()
+//            reader.close()
+            p.destroy()
+        }
     }
 
     companion object {
         const val pkgName = "com.iflytek.acp"
         const val pkgActivity = "$pkgName.EntryActivity"
+        const val pkgMainActivity = "$pkgName/.view.AcousticActivity"
         const val fileSuffix = ".txt"
         var curTime = ""
         var curDate = ""
@@ -580,6 +672,7 @@ class MainActivity : AppCompatActivity() {
         const val ACTION = "interrupt signal"
         var viewShown = false
         var exceptionFlag = false
+        var testBtnOn = false
     }
 
 }
