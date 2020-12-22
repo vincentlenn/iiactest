@@ -3,6 +3,7 @@ package com.iflytek.acptest
 import android.annotation.SuppressLint
 import android.content.*
 import android.content.pm.PackageManager
+import android.icu.text.NumberFormat
 import android.os.*
 import android.os.SystemClock.sleep
 import android.text.TextUtils
@@ -278,8 +279,15 @@ class MainActivity : AppCompatActivity() {
             val rf = BufferedReader(FileReader(File(tmpFile)))
             var line = rf.readLine()
             while (line != null) {
-                val l = line.substring(line.lastIndexOf(":") + 3, line.lastIndexOf("("))
-                re += "[${count + 1}]: $l"
+                /***
+                 * 有时 logcat 输出中的 Displayed 行中会包含一个总时间的附加字段 total
+                 * total 时间测量值仅在单个 Activity 的时间和总启动时间之间存在差异时才会显示
+                 */
+                val l = if (line.contains("total")) {
+                    line.substring(line.lastIndexOf("total") + 7, line.lastIndexOf(")")) } else {
+                    line.substring(line.lastIndexOf(":") + 3)
+                }
+                re += "[${count + 1}]: $l "
                 var uptime = if (l.substring(0, l.lastIndexOf("ms")).contains("s")) {
                     l.substring(0, l.indexOf("s")).toInt() * 1000 + l.substring(l.indexOf("s") +1, l.lastIndexOf("ms")).toInt()
                 } else {
@@ -290,7 +298,9 @@ class MainActivity : AppCompatActivity() {
                 line = rf.readLine()
             }
             try {
-                am_result.text = re + " [Average]: ${sum/count}ms"
+                val nf = NumberFormat.getNumberInstance()
+                nf.maximumFractionDigits = 2
+                am_result.text = re + " [Average]: ${nf.format((sum/count).toFloat())}ms"
             } catch (e: ArithmeticException) {
                 am_result.text = re
             }
@@ -305,6 +315,44 @@ class MainActivity : AppCompatActivity() {
             val tmpFile = op_path + File.separatorChar + "startup_temp_2.txt"
             dltFile(tmpFile)
             mkFile(tmpFile)
+            for (i in 1..5) {
+                val p = Runtime.getRuntime().exec("am start -W -S $pkgMainActivity")
+                val reader = BufferedReader(InputStreamReader(p.inputStream))
+                var line = reader.readLine()
+                while (line != null) {
+                    if (line.contains("TotalTime:")) {
+                        FileHandler.writeContents(tmpFile, line)
+                    }
+                    line = reader.readLine()
+                }
+                p.waitFor()
+                reader.close()
+                p.inputStream.close()
+                p.destroy()
+            }
+            cmdKill()
+            sleep(1000)
+            Runtime.getRuntime().exec("am start com.iflytek.acptest/.MainActivity")
+            var re = ""
+            var count = 0
+            var sum = 0
+            val rf = BufferedReader(FileReader(File(tmpFile)))
+            var s = rf.readLine()
+            while (s != null) {
+                val l = s.substring(s.lastIndexOf(":") + 2)
+                re += "[${count + 1}]: ${l}ms  "
+                sum += l.toInt()
+                count ++
+                s = rf.readLine()
+            }
+            try {
+                val nf = NumberFormat.getNumberInstance()
+                nf.maximumFractionDigits = 2
+                tt_result.text = re + "[Average]: ${nf.format((sum/count).toFloat())}ms"
+            } catch (e: ArithmeticException) {
+                tt_result.text = re
+            }
+            it.isEnabled = true
         }
 
     }
@@ -345,7 +393,7 @@ class MainActivity : AppCompatActivity() {
          */
         val intent = Intent()
         intent.addCategory(Intent.CATEGORY_HOME)
-        intent.component = ComponentName(this, "com.example.iiactest.MainActivity")
+        intent.component = ComponentName(this, ".MainActivity")
         startActivity(intent)
     }
 
