@@ -19,18 +19,16 @@ import com.iflytek.acptest.utils.ItestHelper
 import com.iflytek.acptest.utils.*
 import kotlinx.android.synthetic.main.activity_main.*
 import org.jetbrains.anko.toast
-import org.json.JSONArray
-import org.json.JSONObject
 import java.io.*
 import java.lang.ArithmeticException
 import java.text.SimpleDateFormat
 import java.util.*
-import java.util.function.ToDoubleBiFunction
 
 
 class MainActivity : AppCompatActivity() {
 
-    private var thread: Thread? = null
+    private var perfTh: Thread? = null
+    private var stableTh: Thread? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -61,8 +59,10 @@ class MainActivity : AppCompatActivity() {
         mkFolder(itest_store_path)
         val simpleDateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.CHINA)
         curDate = simpleDateFormat.format(Date())
-        mkFile(op_path + File.separatorChar + "log-$curDate$fileSuffix")
-        FileHandler.logger("perf", "Launch performance test tool.")
+        mkFile(op_path + File.separatorChar + "main-log_$curDate$fileSuffix")
+        mkFile(op_path + File.separatorChar + "perf-log_$curDate$fileSuffix")
+        mkFile(op_path + File.separatorChar + "stable-log_$curDate$fileSuffix")
+        FileHandler.logger("main", "Launch performance test tool.")
 
         // 启动iTest后台服务
         itestManager.runServer()
@@ -98,7 +98,7 @@ class MainActivity : AppCompatActivity() {
             // 检查电池信息并判断是否执行测试
             batteryLevel = examiner.batteryLevel(this)!!.toInt()
             batteryStatus = examiner.batteryIsCharging(this)
-            if (batteryLevel < 80) {
+            if (batteryLevel < highBattery) {
                 FileHandler.logger("perf", "Battery is low, refuse to execute.")
                 if (batteryStatus["unPlugged"]!!)
                     showFeedback("当前电量$batteryLevel%，请插上电源，并等待电池充满后再执行")
@@ -106,7 +106,7 @@ class MainActivity : AppCompatActivity() {
                     showFeedback("当前电量$batteryLevel%，请等待电池充满后再执行")
             } else {
                 duration_bar.requestFocus()
-                thread = object: Thread() {
+                perfTh = object: Thread() {
                     override fun run() {
                         super.run()
                         var i = 1
@@ -165,7 +165,7 @@ class MainActivity : AppCompatActivity() {
                         myHandler.sendEmptyMessage(0)
                     }
                 }
-                (thread as Thread).start()
+                (perfTh as Thread).start()
             }
         }
 
@@ -364,7 +364,7 @@ class MainActivity : AppCompatActivity() {
             // 检查设备电量
             batteryLevel = examiner.batteryLevel(this)!!.toInt()
             batteryStatus = examiner.batteryIsCharging(this)
-            if (batteryLevel < 100) {
+            if (batteryLevel < highBattery) {
                 FileHandler.logger("stable", "Battery is low, refuse to execute.")
                 if (batteryStatus["unPlugged"]!!) {
                     showFeedback("当前电量$batteryLevel%，请插上电源，并等待电池充满后再执行")
@@ -373,7 +373,68 @@ class MainActivity : AppCompatActivity() {
                 }
                 it.isEnabled = true
             } else {
-
+                FileHandler.logger("stable", "start stable test.")
+                val monkeyFile = op_path + File.separatorChar + "monkey_$curDate.log"
+                mkFile(monkeyFile)
+                stableTh = object : Thread() {
+                    override fun run() {
+                        super.run()
+                        MyThread(monkeyFile).start()
+                        while (true) {
+                            if (examiner.batteryLevel(this@MainActivity)!!.toInt() == lowBattery) {
+                                FileHandler.logger("stable", "battery low, end the stable test.")
+                                break
+                            }
+                            if (monkeyEnd) {
+                                MyThread(monkeyFile).start()
+                                FileHandler.logger("stable", "release another monkey.")
+                            }
+                            sleep(1000)
+                        }
+                        // find uid of monkey and kill
+                        val p = Runtime.getRuntime().exec("ps -ef|grep commands.monkey")
+                        val reader = BufferedReader(InputStreamReader(p.inputStream))
+                        var l = reader.readLine()
+                        while (true) {
+                            if (l == null) {
+                                break
+                            }
+                            if (l.contains("com.android.commands.monkey")) {
+                                FileHandler.logger("stable", l)
+                                monkeyUid = l.split("\t")[1]
+                                break
+                            }
+                            l = reader.readLine()
+                        }
+                        p.waitFor()
+                        p.inputStream.close()
+                        reader.close()
+                        p.destroy()
+                        if (monkeyUid != "") {
+                            FileHandler.logger("stable", "finish the monkey: kill $monkeyUid")
+                            Runtime.getRuntime().exec("kill $monkeyUid")
+                        }
+                        cmdKill("stable")
+                        stable_btn.isEnabled = true
+                        val intent = Intent()
+                        intent.addCategory(Intent.CATEGORY_HOME)
+                        intent.component = ComponentName(this@MainActivity, ".MainActivity")
+                        startActivity(intent)
+                        showFeedback("测试执行完毕.")
+                    }
+                }
+//                stableTh = object : Thread() {
+//                    override fun run() {
+//                        super.run()
+//                        while (true) {
+//                            when ((0..6).random()) {
+//                                0 -> {  }
+//                                1 -> {}
+//                            }
+//                        }
+//                    }
+//                }
+                (stableTh as Thread).start()
             }
         }
 
@@ -654,7 +715,6 @@ class MainActivity : AppCompatActivity() {
         @SuppressLint("HandlerLeak")
         override fun handleMessage(msg: Message) {
             super.handleMessage(msg)
-//            println(msg)
             when (msg.what) {
                 0 -> {
                     resetBtnSetting()
@@ -682,31 +742,32 @@ class MainActivity : AppCompatActivity() {
                 val state = intent?.getStringExtra("trigger")
                 if (state.equals("error")) {
                     FileHandler.logger("perf", "Received broadcast of error trigger.")
-                    thread!!.interrupt()
+                    perfTh!!.interrupt()
                 }
             }
         }
     }
 
+    // 执行monkey
     inner class MyThread(file: String): Thread() {
         private val f = file
         override fun run() {
             super.run()
-            Runtime.getRuntime().exec("logcat -c")
-            val p = Runtime.getRuntime().exec("logcat -f $f -b main -s ActivityManager:I")
-//            val reader = BufferedReader(InputStreamReader(p.inputStream))
-//            var line = reader.readLine()
-//            while (!currentThread().isInterrupted) {
-//                if (line != null && line.contains("Displayed $pkgMainActivity")) {
-//                    Log.i("TEST", line)
-//                    val startup = line.substring(line.lastIndexOf(":") + 3, line.lastIndexOf("("))
-//                    FileHandler.writeContents(f, startup)
-//                }
-//                line = reader.readLine()
-//            }
+            monkeyEnd = false
+            val p = Runtime.getRuntime().exec("monkey -p $pkgName -s 1234 --pct-trackball 0 --pct-nav 0 --pct-majornav 0 --pct-syskeys 0 --throttle 15000 -v -v -v 10000")
+            val reader = BufferedReader(InputStreamReader(p.inputStream))
+            var line = reader.readLine()
+            while (true) {
+                if (line == null) {
+                    monkeyEnd = true
+                    break
+                }
+                FileHandler.writeContents(f, line)
+                line = reader.readLine()
+            }
             p.waitFor()
             p.inputStream.close()
-//            reader.close()
+            reader.close()
             p.destroy()
         }
     }
@@ -716,9 +777,11 @@ class MainActivity : AppCompatActivity() {
         const val pkgActivity = "$pkgName.EntryActivity"
         const val pkgMainActivity = "$pkgName/.view.AcousticActivity"
         const val fileSuffix = ".txt"
+        const val lowBattery = 1
+        const val highBattery = 90
         var curTime = ""
         var curDate = ""
-        val op_path = Environment.getExternalStorageDirectory().absolutePath + File.separatorChar + "perfData"
+        val op_path = Environment.getExternalStorageDirectory().absolutePath + File.separatorChar + "acp.test.tool"
         val itest_store_path = op_path + File.separatorChar + "itest"
         val log_path = Environment.getExternalStorageDirectory().absolutePath + File.separatorChar + pkgName + File.separatorChar + "logs"
         val itest_data_path = Environment.getExternalStorageDirectory().absolutePath + File.separatorChar + "AndroidPropertyTool4" + File.separatorChar + "handTest"
@@ -743,6 +806,8 @@ class MainActivity : AppCompatActivity() {
         var viewShown = false
         var exceptionFlag = false
         var testBtnOn = false
+        var monkeyEnd = false
+        var monkeyUid = ""
     }
 
 }

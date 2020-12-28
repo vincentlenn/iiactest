@@ -3,7 +3,6 @@ package com.iflytek.acptest
 import android.accessibilityservice.AccessibilityService
 import android.annotation.SuppressLint
 import android.content.Intent
-import android.util.Log
 import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
 import com.iflytek.acptest.MainActivity.Companion.ACTION

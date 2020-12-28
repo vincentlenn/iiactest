@@ -100,8 +100,8 @@ public class FileHandler {
         String timestamp = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss:SSS", Locale.CHINA).format(new Date());
         String log = timestamp + ": " + content;
         String date = new SimpleDateFormat("yyyy-MM-dd", Locale.CHINA).format(new Date());
-        String root = Environment.getExternalStorageDirectory().getAbsolutePath() + File.separatorChar + "perfData";
-        String logFile = root + File.separatorChar + tag + "log-" + date + ".txt";
+        String root = Environment.getExternalStorageDirectory().getAbsolutePath() + File.separatorChar + "acp.test.tool";
+        String logFile = root + File.separatorChar + tag + "-log_" + date + ".txt";
         writeContents(logFile, log);
     }
 
