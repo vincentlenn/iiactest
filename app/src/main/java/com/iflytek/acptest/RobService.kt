@@ -63,7 +63,7 @@ class RobService : AccessibilityService() {
             when (event.packageName) {
                 pkgName -> {
                     if (event.text.toString().contains("系统运行异常") || event.text.toString().contains("功能使用异常")) {
-                        FileHandler.logger("Caught the alert dialog: ${event.text}.")
+                        FileHandler.logger("main","Caught the alert dialog: ${event.text}.")
                         val intent = Intent(ACTION)
                         intent.putExtra("trigger", "error")
                         sendBroadcast(intent)
@@ -75,14 +75,14 @@ class RobService : AccessibilityService() {
                 "iflytek.testTech.propertytool" -> {
                     if (event.text.toString() == "[iTest]" && event.className.toString() == "iflytek.testTech.propertytool.activity.PermissionDialogActivity") {
                         Runtime.getRuntime().exec("input keyevent 4")
-                        FileHandler.logger("Simulate to click BACK.")
+                        FileHandler.logger("main","Simulate to click BACK.")
                     }
                 }
             }
         }
         AccessibilityEvent.TYPE_VIEW_CLICKED -> {
 //                Log.i("ACCESSIBILITY", "$event")
-            FileHandler.logger("${event.text} is clicked.")
+            FileHandler.logger("main","${event.text} is clicked.")
             if (event.text.toString().contains("频率范围：")) {
 //                execCmd("input keyevent --longpress 135")
             }
@@ -97,7 +97,7 @@ class RobService : AccessibilityService() {
 
   private fun execCmd(cmd: String) {
     Runtime.getRuntime().exec(cmd)
-    FileHandler.logger("Simulate to take photo/video.")
+    FileHandler.logger("main","Simulate to take photo/video.")
   }
 
   private fun handleNotification(event: AccessibilityEvent) {
@@ -120,11 +120,11 @@ class RobService : AccessibilityService() {
       val node = root.findAccessibilityNodeInfosByViewId("$pkgName:id/$id")
       if (!node.isNullOrEmpty()) {
         node[0].performAction(AccessibilityNodeInfo.ACTION_CLICK)
-        FileHandler.logger("${node[0].viewIdResourceName.split("/")[1]} button is clicked.")
+        FileHandler.logger("main","${node[0].viewIdResourceName.split("/")[1]} button is clicked.")
         return true
       }
     } catch (e: NullPointerException) {
-      FileHandler.logger("Throw exception when try to click button: \n$e")
+      FileHandler.logger("main","Throw exception when try to click button: \n$e")
     }
     return false
   }
@@ -134,11 +134,11 @@ class RobService : AccessibilityService() {
     try {
       val node = root.findAccessibilityNodeInfosByViewId("$pkgName:id/$id")
       if (!node.isNullOrEmpty()) {
-        FileHandler.logger("${event.eventType} Found the view: ${node[0].viewIdResourceName.split("/")[1]}")
+        FileHandler.logger("main","${event.eventType} Found the view: ${node[0].viewIdResourceName.split("/")[1]}")
         return true
       }
     } catch (e: NullPointerException) {
-      FileHandler.logger("Throw exception when find view: $e")
+      FileHandler.logger("main","Throw exception when find view: $e")
     }
     return false
   }

@@ -349,7 +349,7 @@
                                 android:id="@+id/btn_method1"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="执行"
+                                android:text="开始执行"
                                 android:layout_marginLeft="50dp"
                                 android:layout_marginTop="10dp"/>
                         <TextView
@@ -377,7 +377,7 @@
                                 android:id="@+id/btn_method2"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="执行"
+                                android:text="开始执行"
                                 android:layout_marginLeft="50dp"
                                 android:layout_marginTop="10dp"/>
                         <TextView
@@ -388,6 +388,39 @@
                                 android:id="@+id/tt_result"
                                 android:text=""/>
                     </LinearLayout>
+                </ScrollView>
+
+                <!-- 第三个tab布局 -->
+                <ScrollView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:id="@+id/tab3">
+                <LinearLayout
+                        android:layout_width="fill_parent"
+                        android:layout_height="fill_parent"
+                        android:orientation="vertical">
+                    <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="20dp"
+                            android:layout_marginLeft="50dp"
+                            android:layout_marginTop="20dp"
+                            android:text="执行说明："
+                            android:textStyle="bold"/>
+                    <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:layout_marginLeft="50dp"
+                            android:layout_marginTop="10dp"
+                            android:text="@string/stable_test"
+                            android:textColor="@android:color/darker_gray"/>
+                    <Button
+                            android:id="@+id/stable_btn"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="开始执行"
+                            android:layout_marginLeft="50dp"
+                            android:layout_marginTop="10dp"/>
+                </LinearLayout>
                 </ScrollView>
 
             </FrameLayout>

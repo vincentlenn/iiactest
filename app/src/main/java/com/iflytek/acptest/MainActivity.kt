@@ -41,6 +41,7 @@ class MainActivity : AppCompatActivity() {
         tab.setup()
         tab.addTab(tab.newTabSpec("tab1").setIndicator("性能指标", null).setContent(R.id.tab1))
         tab.addTab(tab.newTabSpec("tab2").setIndicator("冷启动时间", null).setContent(R.id.tab2))
+        tab.addTab(tab.newTabSpec("tab3").setIndicator("稳定性测试", null).setContent(R.id.tab3))
 
         findViewById<TextView>(R.id.pck_name).text = pkgName
         findViewById<TextView>(R.id.pck_version).text = getPkgVer(pkgName)
@@ -61,7 +62,7 @@ class MainActivity : AppCompatActivity() {
         val simpleDateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.CHINA)
         curDate = simpleDateFormat.format(Date())
         mkFile(op_path + File.separatorChar + "log-$curDate$fileSuffix")
-        FileHandler.logger("Launch performance test tool.")
+        FileHandler.logger("perf", "Launch performance test tool.")
 
         // 启动iTest后台服务
         itestManager.runServer()
@@ -92,13 +93,13 @@ class MainActivity : AppCompatActivity() {
                 loop_setting.text.toString().toInt()
             }
             mkFile(op_path + File.separatorChar + "log-$curDate$fileSuffix")
-            FileHandler.logger("User setting: run $loop times, ${hour * 60 + minute} min for each time, frequency is $frequency_btn_isON, spectrogram is $spectrogram_btn_isON, video is $record_video.")
+            FileHandler.logger("perf", "User setting: run $loop times, ${hour * 60 + minute} min for each time, frequency is $frequency_btn_isON, spectrogram is $spectrogram_btn_isON, video is $record_video.")
 
             // 检查电池信息并判断是否执行测试
             batteryLevel = examiner.batteryLevel(this)!!.toInt()
             batteryStatus = examiner.batteryIsCharging(this)
             if (batteryLevel < 80) {
-                FileHandler.logger("Battery is low, refuse to execute.")
+                FileHandler.logger("perf", "Battery is low, refuse to execute.")
                 if (batteryStatus["unPlugged"]!!)
                     showFeedback("当前电量$batteryLevel%，请插上电源，并等待电池充满后再执行")
                 else
@@ -112,9 +113,9 @@ class MainActivity : AppCompatActivity() {
                         loop@ while (i <= loop) {
                             resetBtnStatus()
                             itestManager.monitorStart("cpu", "pss", pkg = pkgName)
-                            FileHandler.logger("iTest begin to monitor.")
+                            FileHandler.logger("perf", "iTest begin to monitor.")
                             val startLv = examiner.batteryLevel(this@MainActivity)!!.toInt()
-                            entryApp()
+                            entryApp("perf")
 //                            try {
 //                                sleep(duration)
 //                            } catch (e: InterruptedException) {
@@ -134,7 +135,7 @@ class MainActivity : AppCompatActivity() {
                                     /**
                                      * 线程sleep时被中断，sleep方法会抛出异常并清除中断标识位，然后执行后续代码
                                      */
-                                    FileHandler.logger("Target app threw an error at $i of $loop, let`s try again.")
+                                    FileHandler.logger("perf", "Target app threw an error at $i of $loop, let`s try again.")
                                     exceptionFlag = true
                                     break
                                 }
@@ -145,14 +146,14 @@ class MainActivity : AppCompatActivity() {
                                 sleep(5000)
                             }
 //                            exitApp()
-                            cmdKill()
+                            cmdKill("perf")
                             val endLv = examiner.batteryLevel(this@MainActivity)!!.toInt()
                             resetBtnStatus()
                             if (exceptionFlag) {
                                 exceptionFlag = false
                                 continue@loop
                             }
-                            FileHandler.logger("Job($i of $loop) is done.")
+                            FileHandler.logger("perf", "Job($i of $loop) is done.")
                             println(coreGroup)
                             FileHandler.copyDirectory(itest_data_path, itest_store_path)
                             curTime = SimpleDateFormat("yyyy-MM-dd-HH-mm-ss", Locale.CHINA).format(Date())
@@ -214,7 +215,7 @@ class MainActivity : AppCompatActivity() {
             record_video = false
         }
 
-        // 测试按钮
+        // 调试按钮
         test_btn.setOnClickListener {
             batteryLevel = examiner.batteryLevel(this)!!.toInt()
             batteryStatus = examiner.batteryIsCharging(this)
@@ -238,7 +239,7 @@ class MainActivity : AppCompatActivity() {
                 if (line == null) {
                     break
                 }
-                FileHandler.logger(line)
+                FileHandler.logger("perf", line)
             }
             p.waitFor()
             p.inputStream.close()
@@ -256,6 +257,7 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
+        // 冷启动时间测试方法1
         btn_method1.setOnClickListener {
             it.isEnabled = false
             if (am_result.text != null) {
@@ -267,9 +269,9 @@ class MainActivity : AppCompatActivity() {
             Runtime.getRuntime().exec("logcat -c")
             Runtime.getRuntime().exec("logcat -f $tmpFile -b main -s ActivityManager:I")
             for (i in 1..5) {
-                entryApp()
+                entryApp("coldboot")
                 sleep(10000)
-                cmdKill()
+                cmdKill("coldboot")
                 sleep(1000)
             }
             Runtime.getRuntime().exec("logcat -c")
@@ -307,6 +309,7 @@ class MainActivity : AppCompatActivity() {
             it.isEnabled = true
         }
 
+        // 冷启动时间测试方法2
         btn_method2.setOnClickListener {
             it.isEnabled = false
             if (tt_result.text != null) {
@@ -330,7 +333,7 @@ class MainActivity : AppCompatActivity() {
                 p.inputStream.close()
                 p.destroy()
             }
-            cmdKill()
+            cmdKill("coldboot")
             sleep(1000)
             Runtime.getRuntime().exec("am start com.iflytek.acptest/.MainActivity")
             var re = ""
@@ -355,12 +358,31 @@ class MainActivity : AppCompatActivity() {
             it.isEnabled = true
         }
 
+        // 稳定性测试按钮
+        stable_btn.setOnClickListener {
+            it.isEnabled = false
+            // 检查设备电量
+            batteryLevel = examiner.batteryLevel(this)!!.toInt()
+            batteryStatus = examiner.batteryIsCharging(this)
+            if (batteryLevel < 100) {
+                FileHandler.logger("stable", "Battery is low, refuse to execute.")
+                if (batteryStatus["unPlugged"]!!) {
+                    showFeedback("当前电量$batteryLevel%，请插上电源，并等待电池充满后再执行")
+                } else {
+                    showFeedback("当前电量$batteryLevel%，请等待电池充满后再执行")
+                }
+                it.isEnabled = true
+            } else {
+
+            }
+        }
+
     }
 
     override fun onStop() {
         super.onStop()
         Log.i("UI Thread", "main activity onStop")
-        FileHandler.logger("main activity onStop.")
+        FileHandler.logger("main", "main activity onStop.")
     }
 
     override fun onDestroy() {
@@ -372,21 +394,21 @@ class MainActivity : AppCompatActivity() {
         }
         myHandler.removeMessages(1)
         Log.i("UI Thread", "main activity onDestroy")
-        FileHandler.logger("main activity onDestroy.")
+        FileHandler.logger("main", "main activity onDestroy.")
     }
 
     // 启动被测应用
-    private fun entryApp() {
+    private fun entryApp(tag: String) {
         val intent = Intent(Intent.ACTION_MAIN)
         intent.addCategory(Intent.CATEGORY_LAUNCHER)
         intent.component = ComponentName(pkgName, pkgActivity)
         startActivity(intent)
-        FileHandler.logger("Target app is running.")
+        FileHandler.logger(tag, "Target app is running.")
     }
 
     // 退出被测应用
     private fun exitApp() {
-        FileHandler.logger("Exit the target activity now.")
+        FileHandler.logger("perf", "Exit the target activity now.")
         /**
          *  通过新建已存在于栈底的activity,将该activity调到栈顶，
          *  配合它的launch mode=singleTask，将调起的被测应用activity出栈，实现退出被测应用
@@ -397,7 +419,7 @@ class MainActivity : AppCompatActivity() {
         startActivity(intent)
     }
 
-    private fun cmdKill() {
+    private fun cmdKill(tag: String) {
         val cmd = "am force-stop $pkgName \n"
         try {
             var process = Runtime.getRuntime().exec(cmd)
@@ -405,7 +427,7 @@ class MainActivity : AppCompatActivity() {
 //            out.write(cmd.toByteArray())
 //            out.flush()
             process.outputStream.close()
-            FileHandler.logger("Exit target app.")
+            FileHandler.logger(tag, "Exit target app.")
         } catch (e: IOException) {
             e.printStackTrace()
         }
@@ -430,7 +452,7 @@ class MainActivity : AppCompatActivity() {
                 return appInfo.versionName
             }
         } catch (e: PackageManager.NameNotFoundException) {
-            FileHandler.logger("${e.printStackTrace()}")
+            FileHandler.logger("main", "${e.printStackTrace()}")
             return "Not install"
         }
         return "Unknown"
@@ -464,11 +486,11 @@ class MainActivity : AppCompatActivity() {
 
         if (calEngineTime.cal(rFileName, log_path, curTime)) {
             Log.i("Data processor", "Calculate engine time is done.")
-            FileHandler.logger("Calculate engine time is done.")
+            FileHandler.logger("perf", "Calculate engine time is done.")
             // 统计iTest数据
             dataProcessor.calPerfData(rFileName, curTime)
             Log.i("Data processor", "Calculate performance data is done.")
-            FileHandler.logger("Calculate performance data is done.")
+            FileHandler.logger("perf", "Calculate performance data is done.")
         }
 
         FileHandler.writeContents(rFileName, freq)
@@ -490,7 +512,7 @@ class MainActivity : AppCompatActivity() {
             if (!dir.exists()) {
                 dir.mkdirs()
 //                Log.i("Data processor", "Folder $path is created.")
-                FileHandler.logger("Folder $path is created.")
+                FileHandler.logger("main", "Folder $path is created.")
             }
         }
     }
@@ -564,8 +586,8 @@ class MainActivity : AppCompatActivity() {
 
     private fun executor(index: Int) {
         itestManager.monitorStart("cpu", "pss", pkg = pkgName)
-        FileHandler.logger("iTest begin to monitor.")
-        entryApp()
+        FileHandler.logger("perf", "iTest begin to monitor.")
+        entryApp("perf")
         Thread.sleep(duration)
         itestManager.monitorFinish()
         FileHandler.copyDirectory(itest_data_path, itest_store_path)
@@ -659,7 +681,7 @@ class MainActivity : AppCompatActivity() {
             if (intent?.action.equals(ACTION)) {
                 val state = intent?.getStringExtra("trigger")
                 if (state.equals("error")) {
-                    FileHandler.logger("Received broadcast of error trigger.")
+                    FileHandler.logger("perf", "Received broadcast of error trigger.")
                     thread!!.interrupt()
                 }
             }

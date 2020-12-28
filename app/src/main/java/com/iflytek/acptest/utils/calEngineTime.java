@@ -54,7 +54,8 @@ public class calEngineTime {
                 {"native", "cb_im"},
                 {"native", "cb_sp"},
                 {"android", "generate"},
-                {"android", "matrix"}
+                {"android", "matrix"},
+                {"android", "intensity"}
         };
 
         String packages[][] = {
@@ -138,7 +139,7 @@ public class calEngineTime {
                                     count++;
                                     total += i;
                                 } catch (NumberFormatException e) {
-                                    FileHandler.logger("Exception thrown when parsing data to Float: " + e);
+                                    FileHandler.logger("perf", "Exception thrown when parsing data to Float: " + e);
                                 }
                             }
                         }
@@ -194,7 +195,7 @@ public class calEngineTime {
                                     count++;
                                     total += i;
                                 } catch (NumberFormatException e) {
-                                    FileHandler.logger("Exception thrown when parsing data to Int: " + e);
+                                    FileHandler.logger("perf", "Exception thrown when parsing data to Int: " + e);
                                 }
                             } else if (s.contains("heat map " + title)) {
                                 int costStartInd = s.lastIndexOf(":");
@@ -220,7 +221,7 @@ public class calEngineTime {
                                     }
                                 } catch (NumberFormatException e) {
                                     System.out.println("Exception thrown  :" + e);
-                                    FileHandler.logger("Exception thrown when parsing data to Int: " + e);
+                                    FileHandler.logger("perf", "Exception thrown when parsing data to Int: " + e);
                                 }
                             } else if (s.contains("intensity " + title)) {
                                 int costStartInd = s.lastIndexOf(":");
@@ -246,7 +247,25 @@ public class calEngineTime {
                                     }
                                 } catch (NumberFormatException e) {
                                     System.out.println("Exception thrown  :" + e);
-                                    FileHandler.logger("Exception thrown when parsing data to Int: " + e);
+                                    FileHandler.logger("perf", "Exception thrown when parsing data to Int: " + e);
+                                }
+                            } else if (s.contains(title + " mat:")) {
+                                int costStartInd = s.lastIndexOf(":") + 2;
+                                int costEndInd = s.lastIndexOf("ms");
+                                if (costStartInd < 0 || costEndInd < 0 || costStartInd >= s.length()) {
+                                    FileHandler.writeContents(file, "Warning: Invalid cost log found: " + s);
+                                    s = bf.readLine();
+                                    continue;
+                                }
+                                String temp = s.substring(costStartInd, costEndInd);
+                                try {
+                                    int i = Integer.parseInt(temp);
+                                    max = Math.max(max, i);
+                                    min = Math.min(min, i);
+                                    count++;
+                                    total += i;
+                                } catch (NumberFormatException e) {
+                                    FileHandler.logger("perf", "Exception thrown when parsing data to Int: " + e);
                                 }
                             }
                         }
@@ -284,7 +303,7 @@ public class calEngineTime {
                                 (float) total_inv / (float) count_inv;
                 }
                 res = res1 + "\n" + res2;
-            } else {
+            } else if (title == "matrix") {
                 String res1 = "";
                 String res2 = "";
                 if (min == Integer.MAX_VALUE && max == Integer.MIN_VALUE) {
@@ -303,6 +322,14 @@ public class calEngineTime {
                             (float) total_inv / (float) count_inv;
                 }
                 res = res1 + "\n" + res2;
+            } else {
+                if (min == Integer.MAX_VALUE && max == Integer.MIN_VALUE) {
+                    res = title + " mat on engine cost time: Not found";
+                } else {
+                    res = title + ": MAT ON ENGINE: min: " + (float) min + ", max: " + (float) max +
+                            ", count: " + count + ", average: " + (float) total /
+                            (float) count;
+                }
             }
             FileHandler.writeContents(file, res);
         }

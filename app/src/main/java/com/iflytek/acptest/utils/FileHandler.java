@@ -90,18 +90,18 @@ public class FileHandler {
                 }
             }
             System.out.println("Copy handTest folder done.");
-            FileHandler.logger("Copy handTest folder done.");
+            FileHandler.logger("perf", "Copy handTest folder done.");
         } else {
-            FileHandler.logger("There is no file under path: " + source);
+            FileHandler.logger("perf", "There is no file under path: " + source);
         }
     }
 
-    public static void logger(String content) throws IOException {
+    public static void logger(String tag, String content) throws IOException {
         String timestamp = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss:SSS", Locale.CHINA).format(new Date());
         String log = timestamp + ": " + content;
         String date = new SimpleDateFormat("yyyy-MM-dd", Locale.CHINA).format(new Date());
         String root = Environment.getExternalStorageDirectory().getAbsolutePath() + File.separatorChar + "perfData";
-        String logFile = root + File.separatorChar + "log-" + date + ".txt";
+        String logFile = root + File.separatorChar + tag + "log-" + date + ".txt";
         writeContents(logFile, log);
     }
 
