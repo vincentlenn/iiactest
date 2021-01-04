@@ -420,6 +420,15 @@
                             android:text="开始执行"
                             android:layout_marginLeft="50dp"
                             android:layout_marginTop="10dp"/>
+                    <TextView
+                            android:id="@+id/message"
+                            android:layout_width="match_parent"
+                            android:layout_height="20dp"
+                            android:layout_marginLeft="50dp"
+                            android:layout_marginTop="20dp"
+                            android:text=" 执行完成 "
+                            android:textStyle="bold"
+                            android:textColor="@android:color/holo_green_light"/>
                 </LinearLayout>
                 </ScrollView>
 

@@ -47,6 +47,7 @@ class MainActivity : AppCompatActivity() {
         findViewById<TextView>(R.id.sys_version).text = Build.DISPLAY
         findViewById<TextView>(R.id.kernel_version).text = "( ${getKernelVer()} )"
         version.text = "${BuildConfig.BUILD_TYPE} - ${BuildConfig.VERSION_NAME}"
+        message.visibility = 4
 
         // 注册广播
         val filter = IntentFilter()
@@ -112,7 +113,7 @@ class MainActivity : AppCompatActivity() {
                         var i = 1
                         loop@ while (i <= loop) {
                             resetBtnStatus()
-                            itestManager.monitorStart("cpu", "pss", pkg = pkgName)
+                            itestManager.monitorStart("cpu", "pss", pkg = pkgName, tag = "perf")
                             FileHandler.logger("perf", "iTest begin to monitor.")
                             val startLv = examiner.batteryLevel(this@MainActivity)!!.toInt()
                             entryApp("perf")
@@ -140,7 +141,7 @@ class MainActivity : AppCompatActivity() {
                                     break
                                 }
                             }
-                            itestManager.monitorFinish()
+                            itestManager.monitorFinish("perf")
                             if (!record_not_begin) {
                                 Runtime.getRuntime().exec(recording)
                                 sleep(5000)
@@ -364,7 +365,7 @@ class MainActivity : AppCompatActivity() {
             // 检查设备电量
             batteryLevel = examiner.batteryLevel(this)!!.toInt()
             batteryStatus = examiner.batteryIsCharging(this)
-            if (batteryLevel < highBattery) {
+            if (batteryLevel < 10) {
                 FileHandler.logger("stable", "Battery is low, refuse to execute.")
                 if (batteryStatus["unPlugged"]!!) {
                     showFeedback("当前电量$batteryLevel%，请插上电源，并等待电池充满后再执行")
@@ -373,67 +374,157 @@ class MainActivity : AppCompatActivity() {
                 }
                 it.isEnabled = true
             } else {
+                itestManager.monitorStart("cpu", "pss", pkg = pkgName, tag = "stable")
+                FileHandler.logger("stable", "iTest begin to monitor.")
                 FileHandler.logger("stable", "start stable test.")
                 val monkeyFile = op_path + File.separatorChar + "monkey_$curDate.log"
                 mkFile(monkeyFile)
+//                stableTh = object : Thread() {
+//                    override fun run() {
+//                        super.run()
+//                        MyThread(monkeyFile).start()
+//                        while (true) {
+//                            if (examiner.batteryLevel(this@MainActivity)!!.toInt() == lowBattery) {
+//                                FileHandler.logger("stable", "battery low, end the stable test.")
+//                                break
+//                            }
+//                            if (monkeyEnd) {
+//                                MyThread(monkeyFile).start()
+//                                FileHandler.logger("stable", "release another monkey.")
+//                            }
+//                            sleep(1000)
+//                        }
+//                        // find uid of monkey and kill
+//                        val p = Runtime.getRuntime().exec("ps -ef|grep commands.monkey")
+//                        val reader = BufferedReader(InputStreamReader(p.inputStream))
+//                        var l = reader.readLine()
+//                        while (true) {
+//                            if (l == null) {
+//                                break
+//                            }
+//                            if (l.contains("com.android.commands.monkey")) {
+//                                FileHandler.logger("stable", l)
+//                                monkeyUid = l.split("\t")[1]
+//                                break
+//                            }
+//                            l = reader.readLine()
+//                        }
+//                        p.waitFor()
+//                        p.inputStream.close()
+//                        reader.close()
+//                        p.destroy()
+//                        if (monkeyUid != "") {
+//                            FileHandler.logger("stable", "finish the monkey: kill $monkeyUid")
+//                            Runtime.getRuntime().exec("kill $monkeyUid")
+//                        }
+//                        // finish target app and switch to main activity
+//                        itestManager.monitorFinish("stable")
+//                        cmdKill("stable")
+//                        Runtime.getRuntime().exec("am start --user 0 -n com.iflytek.acptest/.MainActivity")
+//                        // process data
+//                        curTime = SimpleDateFormat("yyyy-MM-dd-HH-mm-ss", Locale.CHINA).format(Date())
+//                        changeItestDirName()
+//                        changeIflytekDirName()
+//                        processStableData()
+//                        message.visibility = 0
+//                        stable_btn.isEnabled = true
+//                    }
+//                }
                 stableTh = object : Thread() {
                     override fun run() {
                         super.run()
-                        MyThread(monkeyFile).start()
+                        entryApp("stable")
+                        sleep(10000)
+                        var freq_on = false
+                        var color_on = false
+                        var auto_on = true
                         while (true) {
                             if (examiner.batteryLevel(this@MainActivity)!!.toInt() == lowBattery) {
                                 FileHandler.logger("stable", "battery low, end the stable test.")
                                 break
                             }
-                            if (monkeyEnd) {
-                                MyThread(monkeyFile).start()
-                                FileHandler.logger("stable", "release another monkey.")
+                            when ((0..7).random()) {
+                                0 -> {
+                                    Runtime.getRuntime().exec("input tap 100 350")
+                                    if (!freq_on) {
+                                        freq_on = true
+                                        sleep(2000)
+                                        val start = (105..1150).random()
+                                        val end = (105..1150).random()
+                                        Runtime.getRuntime().exec("input swipe 1760 $start 1760 $end")
+                                        FileHandler.logger("stable", "switch on 频率调整, and change the frequency setting.")
+                                    } else {
+                                        freq_on = false
+                                        FileHandler.logger("stable", "switch off 频率调整.")
+                                    }
+                                }
+                                1 -> {
+                                    Runtime.getRuntime().exec("input tap 100 470")
+                                    FileHandler.logger("stable", "switch on/off 时频图.")
+                                }
+                                2 -> {
+                                    Runtime.getRuntime().exec("input tap 100 600")
+                                    FileHandler.logger("stable", "switch on/off 瞬态模式.")
+                                }
+                                3 -> {
+                                    Runtime.getRuntime().exec("input tap 100 740")
+                                    if (!color_on) {
+                                        if (auto_on) {
+                                            Runtime.getRuntime().exec("input tap 1026 326")
+                                            auto_on = false
+                                            sleep(2000)
+                                            val x = (230..1048).random()
+                                            Runtime.getRuntime().exec("input tap $x 459")
+                                            FileHandler.logger("stable", "switch on 色带调节, turn off auto-adjust and set the threshold.")
+                                        } else {
+                                            Runtime.getRuntime().exec("input tap 1026 326")
+                                            auto_on = true
+                                            FileHandler.logger("stable", "switch on 色带调节, turn on auto-adjust.")
+                                        }
+                                    } else {
+                                        color_on = false
+                                        FileHandler.logger("stable", "switch off 色带调节.")
+                                    }
+                                }
+                                4 -> {
+                                    Runtime.getRuntime().exec("input tap 100 860")
+                                    FileHandler.logger("stable", "goto 历史记录.")
+                                    sleep(10000)
+                                    Runtime.getRuntime().exec("input tap 30 110")
+                                    FileHandler.logger("stable", "go back to MainActivity.")
+                                }
+                                5 -> {
+                                    Runtime.getRuntime().exec("input keyevent 135")
+                                    FileHandler.logger("stable", "take a photo.")
+                                }
+                                6 -> {
+                                    Runtime.getRuntime().exec("input keyevent --longpress 135")
+                                    sleep(10000)
+                                    Runtime.getRuntime().exec("input keyevent --longpress 135")
+                                    FileHandler.logger("stable", "take a video.")
+                                }
+                                7 -> {
+                                    Runtime.getRuntime().exec("input keyevent 26")
+                                    sleep(5000)
+                                    Runtime.getRuntime().exec("input keyevent 26")
+                                    FileHandler.logger("stable", "turn the screen off and then light up.")
+                                }
                             }
-                            sleep(1000)
+                            sleep(15000)
                         }
-                        // find uid of monkey and kill
-                        val p = Runtime.getRuntime().exec("ps -ef|grep commands.monkey")
-                        val reader = BufferedReader(InputStreamReader(p.inputStream))
-                        var l = reader.readLine()
-                        while (true) {
-                            if (l == null) {
-                                break
-                            }
-                            if (l.contains("com.android.commands.monkey")) {
-                                FileHandler.logger("stable", l)
-                                monkeyUid = l.split("\t")[1]
-                                break
-                            }
-                            l = reader.readLine()
-                        }
-                        p.waitFor()
-                        p.inputStream.close()
-                        reader.close()
-                        p.destroy()
-                        if (monkeyUid != "") {
-                            FileHandler.logger("stable", "finish the monkey: kill $monkeyUid")
-                            Runtime.getRuntime().exec("kill $monkeyUid")
-                        }
+                        // finish target app and switch to main activity
+                        itestManager.monitorFinish("stable")
                         cmdKill("stable")
+                        Runtime.getRuntime().exec("am start --user 0 -n com.iflytek.acptest/.MainActivity")
+                        // process data
+                        curTime = SimpleDateFormat("yyyy-MM-dd-HH-mm-ss", Locale.CHINA).format(Date())
+                        changeItestDirName()
+                        changeIflytekDirName()
+                        processStableData()
+                        message.visibility = 0
                         stable_btn.isEnabled = true
-                        val intent = Intent()
-                        intent.addCategory(Intent.CATEGORY_HOME)
-                        intent.component = ComponentName(this@MainActivity, ".MainActivity")
-                        startActivity(intent)
-                        showFeedback("测试执行完毕.")
                     }
                 }
-//                stableTh = object : Thread() {
-//                    override fun run() {
-//                        super.run()
-//                        while (true) {
-//                            when ((0..6).random()) {
-//                                0 -> {  }
-//                                1 -> {}
-//                            }
-//                        }
-//                    }
-//                }
                 (stableTh as Thread).start()
             }
         }
@@ -560,6 +651,16 @@ class MainActivity : AppCompatActivity() {
         FileHandler.writeContents(rFileName, obj.toString())
     }
 
+    private fun processStableData() {
+        val rFileName = op_path + File.separatorChar + "Stable_Results-$curTime$fileSuffix"
+        mkFile(rFileName)
+        if (calEngineTime.cal(rFileName, log_path, curTime)) {
+            FileHandler.logger("stable", "Calculate engine time is done.")
+            dataProcessor.calPerfData(rFileName, curTime)
+            FileHandler.logger("stable", "Calculate performance data is done.")
+        }
+    }
+
     private fun isExternalStorageExist(): Boolean {
         if (Environment.getExternalStorageState() == Environment.MEDIA_MOUNTED) {
             return true
@@ -646,11 +747,11 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun executor(index: Int) {
-        itestManager.monitorStart("cpu", "pss", pkg = pkgName)
+        itestManager.monitorStart("cpu", "pss", pkg = pkgName, tag = "main")
         FileHandler.logger("perf", "iTest begin to monitor.")
         entryApp("perf")
         Thread.sleep(duration)
-        itestManager.monitorFinish()
+        itestManager.monitorFinish("main")
         FileHandler.copyDirectory(itest_data_path, itest_store_path)
         exitApp()
         val myMessage = Message.obtain()
@@ -777,8 +878,8 @@ class MainActivity : AppCompatActivity() {
         const val pkgActivity = "$pkgName.EntryActivity"
         const val pkgMainActivity = "$pkgName/.view.AcousticActivity"
         const val fileSuffix = ".txt"
-        const val lowBattery = 1
-        const val highBattery = 90
+        const val lowBattery = 2
+        const val highBattery = 80
         var curTime = ""
         var curDate = ""
         val op_path = Environment.getExternalStorageDirectory().absolutePath + File.separatorChar + "acp.test.tool"
@@ -801,7 +902,7 @@ class MainActivity : AppCompatActivity() {
         var frequency_btn_clickable = true
         var spectrogram_btn_clickable = true
         const val moveIndicator = "input swipe 1700 672 1700 420"
-        const val recording = "input keyevent --longpress 135" //DP200使用AI功能键键:135
+        const val recording = "input keyevent --longpress 135" //DP200使用AI功能键:135
         const val ACTION = "interrupt signal"
         var viewShown = false
         var exceptionFlag = false

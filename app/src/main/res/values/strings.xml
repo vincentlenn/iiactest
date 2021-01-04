@@ -3,5 +3,5 @@
     <string name="AccessibilityServiceDescription">声学成像仪二代 性能测试自动化工具</string>
     <string name="start_method1_desc">执行 \"logcat -f File -b main -s ActivityManager:I\" 命令并启动应用, 记录冷启动时间. 记录 5 次结果并统计均值.</string>
     <string name="start_method2_desc">执行 \"am start -W -S package_name/.MainActivity\" 命令, 记录totalTime. 记录 5 次结果并统计均值.</string>
-    <string name="stable_test">#检查设备当前电量, 若为 100% 可执行稳定性测试;\n#启动被测应用, 并调用monkey进行随机操作;\n监听设备电量变化, 当电量低至 1% 时结束测试.</string>
+    <string name="stable_test">#检查设备当前电量, 若高于 90% 可执行稳定性测试;\n#启动被测应用, 并模拟用户进行随机操作;\n监听设备电量变化, 当电量低至 2% 时结束测试.</string>
 </resources>
