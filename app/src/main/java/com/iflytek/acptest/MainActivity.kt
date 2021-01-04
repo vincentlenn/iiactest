@@ -365,7 +365,7 @@ class MainActivity : AppCompatActivity() {
             // 检查设备电量
             batteryLevel = examiner.batteryLevel(this)!!.toInt()
             batteryStatus = examiner.batteryIsCharging(this)
-            if (batteryLevel < 10) {
+            if (batteryLevel < highBattery) {
                 FileHandler.logger("stable", "Battery is low, refuse to execute.")
                 if (batteryStatus["unPlugged"]!!) {
                     showFeedback("当前电量$batteryLevel%，请插上电源，并等待电池充满后再执行")
@@ -879,7 +879,7 @@ class MainActivity : AppCompatActivity() {
         const val pkgMainActivity = "$pkgName/.view.AcousticActivity"
         const val fileSuffix = ".txt"
         const val lowBattery = 2
-        const val highBattery = 80
+        const val highBattery = 90
         var curTime = ""
         var curDate = ""
         val op_path = Environment.getExternalStorageDirectory().absolutePath + File.separatorChar + "acp.test.tool"
