@@ -46,7 +46,7 @@ class MainActivity : AppCompatActivity() {
         findViewById<TextView>(R.id.android_version).text = Build.VERSION.RELEASE
         findViewById<TextView>(R.id.sys_version).text = Build.DISPLAY
         findViewById<TextView>(R.id.kernel_version).text = "( ${getKernelVer()} )"
-        version.text = "${BuildConfig.BUILD_TYPE} - ${BuildConfig.VERSION_NAME}"
+        version.text = "${BuildConfig.BUILD_TYPE} - ${BuildConfig.VERSION_NAME}.${BuildConfig.VERSION_CODE}"
         message.visibility = 4
 
         // 注册广播
