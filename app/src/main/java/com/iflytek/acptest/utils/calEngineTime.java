@@ -78,12 +78,12 @@ public class calEngineTime {
             cal_engine_time(Path1, title, file);
         }
 
-        for (String item2[] : packages) {
-            String category2 = item2[0];
-            String keyword = item2[1];
-            String Path2 = target_log + File.separator + category2 + "-" + timestamp;
-            cal_package_lost(Path2, keyword, file);
-        }
+//        for (String item2[] : packages) {
+//            String category2 = item2[0];
+//            String keyword = item2[1];
+//            String Path2 = target_log + File.separator + category2 + "-" + timestamp;
+//            cal_package_lost(Path2, keyword, file);
+//        }
 
         for (String item3[] : rates) {
             String category3 = item3[0];
@@ -291,14 +291,14 @@ public class calEngineTime {
                     res1 = title + " cost time: Not found";
                 } else {
                     res1 = title +
-                                ": HEATMAP TIME COST: min: " + (float) min + ", max: " + (float) max +
+                                " COST: HEATMAP TIME: min: " + (float) min + ", max: " + (float) max +
                                 ", count: " + count + ", average: " + (float) total /
                                 (float) count;
                 }
                 if (min_inv == Integer.MAX_VALUE && max_inv == Integer.MIN_VALUE) {
                     res2 = title + " interval time: Not found";
                 } else {
-                    res2 = title + ": HEATMAP TIME INTERVAL: min: " + (float) min_inv +
+                    res2 = title + " INTERVAL: HEATMAP TIME: min: " + (float) min_inv +
                                 ", max: " + (float) max_inv + ", count: " + count_inv + ", average: " +
                                 (float) total_inv / (float) count_inv;
                 }
@@ -310,14 +310,14 @@ public class calEngineTime {
                     res1 = title + " cost time: Not found";
                 } else {
                     res1 = title +
-                            ": PREPROCESS TIME COST: min: " + (float) min + ", max: " + (float) max +
+                            " COST: PREPROCESS TIME: min: " + (float) min + ", max: " + (float) max +
                             ", count: " + count + ", average: " + (float) total /
                             (float) count;
                 }
                 if (min_inv == Integer.MAX_VALUE && max_inv == Integer.MIN_VALUE) {
                     res2 = title + " interval time: Not found";
                 } else {
-                    res2 = title + ": PREPROCESS TIME INTERVAL: min: " + (float) min_inv +
+                    res2 = title + " INTERVAL: PREPROCESS TIME: min: " + (float) min_inv +
                             ", max: " + (float) max_inv + ", count: " + count_inv + ", average: " +
                             (float) total_inv / (float) count_inv;
                 }

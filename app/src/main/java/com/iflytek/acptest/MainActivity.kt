@@ -903,7 +903,7 @@ class MainActivity : AppCompatActivity() {
         var record_not_begin = true
         var frequency_btn_clickable = true
         var spectrogram_btn_clickable = true
-        const val moveIndicator = "input swipe 1700 672 1700 420"
+        const val moveIndicator = "input swipe 1700 832 1700 1085"
         const val recording = "input keyevent --longpress 135" //DP200使用AI功能键:135
         const val ACTION = "interrupt signal"
         var viewShown = false
