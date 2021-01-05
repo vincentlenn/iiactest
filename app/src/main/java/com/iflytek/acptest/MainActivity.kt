@@ -107,6 +107,7 @@ class MainActivity : AppCompatActivity() {
                     showFeedback("当前电量$batteryLevel%，请等待电池充满后再执行")
             } else {
                 duration_bar.requestFocus()
+                launch_btn.isEnabled=false
                 perfTh = object: Thread() {
                     override fun run() {
                         super.run()
@@ -821,6 +822,7 @@ class MainActivity : AppCompatActivity() {
                     resetBtnSetting()
                     resetBtnStatus()
                     showFeedback("测试执行完毕.")
+                    launch_btn.isEnabled=true
                 }
 //                1 -> {
 //                    try {
