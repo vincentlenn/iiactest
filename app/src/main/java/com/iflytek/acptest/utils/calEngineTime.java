@@ -291,14 +291,14 @@ public class calEngineTime {
                     res1 = title + " cost time: Not found";
                 } else {
                     res1 = title +
-                                " COST: HEATMAP TIME: min: " + (float) min + ", max: " + (float) max +
+                                " cost: HEATMAP TIME: min: " + (float) min + ", max: " + (float) max +
                                 ", count: " + count + ", average: " + (float) total /
                                 (float) count;
                 }
                 if (min_inv == Integer.MAX_VALUE && max_inv == Integer.MIN_VALUE) {
                     res2 = title + " interval time: Not found";
                 } else {
-                    res2 = title + " INTERVAL: HEATMAP TIME: min: " + (float) min_inv +
+                    res2 = title + " interval: HEATMAP TIME: min: " + (float) min_inv +
                                 ", max: " + (float) max_inv + ", count: " + count_inv + ", average: " +
                                 (float) total_inv / (float) count_inv;
                 }
@@ -310,14 +310,14 @@ public class calEngineTime {
                     res1 = title + " cost time: Not found";
                 } else {
                     res1 = title +
-                            " COST: PREPROCESS TIME: min: " + (float) min + ", max: " + (float) max +
+                            " cost: PREPROCESS TIME: min: " + (float) min + ", max: " + (float) max +
                             ", count: " + count + ", average: " + (float) total /
                             (float) count;
                 }
                 if (min_inv == Integer.MAX_VALUE && max_inv == Integer.MIN_VALUE) {
                     res2 = title + " interval time: Not found";
                 } else {
-                    res2 = title + " INTERVAL: PREPROCESS TIME: min: " + (float) min_inv +
+                    res2 = title + " interval: PREPROCESS TIME: min: " + (float) min_inv +
                             ", max: " + (float) max_inv + ", count: " + count_inv + ", average: " +
                             (float) total_inv / (float) count_inv;
                 }

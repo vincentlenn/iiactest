@@ -219,34 +219,21 @@ class MainActivity : AppCompatActivity() {
 
         // 调试按钮
         test_btn.setOnClickListener {
-            batteryLevel = examiner.batteryLevel(this)!!.toInt()
-            batteryStatus = examiner.batteryIsCharging(this)
-            if (batteryStatus["isCharging"]!!) {
-                if (batteryStatus["acCharge"]!!) {
-                    toast("当前电量$batteryLevel%, 正在使用电源充电")
-                } else if (batteryStatus["usbCharge"]!!) {
-                    toast("当前电量$batteryLevel%, 正在使用PC充电, 请使用AC电源")
-                }
-            } else if (batteryLevel < 80) {
-                toast("当前电量$batteryLevel%, 请充电")
-            } else {
-                toast("当前电量$batteryLevel%")
-            }
-
-            val p = Runtime.getRuntime().exec("dalvikvm -cp /sdcard/start.dex Assist showLog")
-            val reader = BufferedReader(InputStreamReader(p.inputStream))
-            var line = ""
-            while (true) {
-                line = reader.readLine()
-                if (line == null) {
-                    break
-                }
-                FileHandler.logger("perf", line)
-            }
-            p.waitFor()
-            p.inputStream.close()
-            reader.close()
-            p.destroy()
+//            val p = Runtime.getRuntime().exec("dalvikvm -cp /sdcard/start.dex Assist showLog")
+//            val reader = BufferedReader(InputStreamReader(p.inputStream))
+//            var line = ""
+//            while (true) {
+//                line = reader.readLine()
+//                if (line == null) {
+//                    break
+//                }
+//                FileHandler.logger("perf", line)
+//            }
+//            p.waitFor()
+//            p.inputStream.close()
+//            reader.close()
+//            p.destroy()
+            Runtime.getRuntime().exec("reboot autodloader")
         }
 
         version.setOnClickListener {
