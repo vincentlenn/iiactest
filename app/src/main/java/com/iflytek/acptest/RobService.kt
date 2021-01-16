@@ -6,6 +6,9 @@ import android.content.Intent
 import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
 import com.iflytek.acptest.MainActivity.Companion.ACTION
+import com.iflytek.acptest.MainActivity.Companion.discharge_btn_clickable
+import com.iflytek.acptest.MainActivity.Companion.discharge_btn_id
+import com.iflytek.acptest.MainActivity.Companion.discharge_btn_isOn
 import com.iflytek.acptest.MainActivity.Companion.frequency_btn_clickable
 import com.iflytek.acptest.MainActivity.Companion.frequency_btn_id
 import com.iflytek.acptest.MainActivity.Companion.frequency_btn_isON
@@ -44,9 +47,13 @@ class RobService : AccessibilityService() {
                             spectrogram_btn_clickable = false
                         }
                     }
+                    if (discharge_btn_isOn && discharge_btn_clickable) {
+                        if (tryClickBtn(discharge_btn_id)) {
+                            discharge_btn_clickable = false
+                        }
+                    }
                     if (record_video && record_not_begin) {
                         record_not_begin = false
-//                            sleep(1000)
                         // 模拟长按拍照键
                         execCmd(recording)
                         if (foundView(event, "record_state")) {
@@ -67,7 +74,7 @@ class RobService : AccessibilityService() {
                         intent.putExtra("trigger", "error")
                         sendBroadcast(intent)
                     }
-                    if (event.className == "com.iflytek.acp.view.AcousticActivity") { //DP200: com.iflytek.acp.view.AcousticActivity, DP100: com.iflytek.iiac.MainActivity
+                    if (event.className == "com.iflytek.acp.view.AcousticActivity") {
                         viewShown = true
                     }
                 }
@@ -87,10 +94,7 @@ class RobService : AccessibilityService() {
             }
 
         }
-        AccessibilityEvent.TYPE_NOTIFICATION_STATE_CHANGED -> {
-//                Log.i("ACCESSIBILITY", "$event,\neventType:${event.eventType}")
-//                FileHandler.logger(event.toString())
-        }
+        AccessibilityEvent.TYPE_NOTIFICATION_STATE_CHANGED -> { }
     }
   }
 

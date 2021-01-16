@@ -15,12 +15,9 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.isVisible
 import androidx.core.widget.addTextChangedListener
 import com.google.gson.Gson
-import com.iflytek.acptest.utils.ItestHelper
 import com.iflytek.acptest.utils.*
 import kotlinx.android.synthetic.main.activity_main.*
-import org.jetbrains.anko.toast
 import java.io.*
-import java.lang.ArithmeticException
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -94,19 +91,22 @@ class MainActivity : AppCompatActivity() {
                 loop_setting.text.toString().toInt()
             }
             mkFile(op_path + File.separatorChar + "log-$curDate$fileSuffix")
-            FileHandler.logger("perf", "User setting: run $loop times, ${hour * 60 + minute} min for each time, frequency is $frequency_btn_isON, spectrogram is $spectrogram_btn_isON, video is $record_video.")
+            FileHandler.logger(
+                "perf",
+                "User setting: run $loop times, ${hour * 60 + minute} min for each time, max frequency is $frequency_btn_isON, spectrogram is $spectrogram_btn_isON, discharge is $discharge_btn_isOn, video is $record_video."
+            )
 
             // 检查电池信息并判断是否执行测试
             batteryLevel = examiner.batteryLevel(this)!!.toInt()
             batteryStatus = examiner.batteryIsCharging(this)
-            if (batteryLevel < highBattery) {
+            if (batteryLevel < highBattery && check_battery) {
                 FileHandler.logger("perf", "Battery is low, refuse to execute.")
                 if (batteryStatus["unPlugged"]!!)
                     showFeedback("当前电量$batteryLevel%，请插上电源，并等待电池充满后再执行")
                 else
                     showFeedback("当前电量$batteryLevel%，请等待电池充满后再执行")
             } else {
-                duration_bar.requestFocus()
+                config_bar.requestFocus()
                 launch_btn.isEnabled=false
                 perfTh = object: Thread() {
                     override fun run() {
@@ -137,7 +137,10 @@ class MainActivity : AppCompatActivity() {
                                     /**
                                      * 线程sleep时被中断，sleep方法会抛出异常并清除中断标识位，然后执行后续代码
                                      */
-                                    FileHandler.logger("perf", "Target app threw an error at $i of $loop, let`s try again.")
+                                    FileHandler.logger(
+                                        "perf",
+                                        "Target app threw an error at $i of $loop, let`s try again."
+                                    )
                                     exceptionFlag = true
                                     break
                                 }
@@ -187,34 +190,24 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        frequency_define.setOnClickListener {
-            frequency_default.isChecked = false
-            frequency_btn_isON = true
+        frequency_switch.setOnCheckedChangeListener { _, isChecked ->
+            frequency_btn_isON = isChecked
         }
 
-        frequency_default.setOnClickListener {
-            frequency_define.isChecked = false
-            frequency_btn_isON = false
+        spectrogram_switch.setOnCheckedChangeListener { _, isChecked ->
+            spectrogram_btn_isON = isChecked
         }
 
-        spectrogram_on.setOnClickListener {
-            spectrogram_off.isChecked = false
-            spectrogram_btn_isON = true
+        discharge_switch.setOnCheckedChangeListener { _, isChecked ->
+            discharge_btn_isOn = isChecked
         }
 
-        spectrogram_off.setOnClickListener {
-            spectrogram_on.isChecked = false
-            spectrogram_btn_isON = false
+        record_switch.setOnCheckedChangeListener { _, isChecked ->
+            record_video = isChecked
         }
 
-        record_on.setOnClickListener {
-            record_off.isChecked = false
-            record_video = true
-        }
-
-        record_off.setOnClickListener {
-            record_on.isChecked = false
-            record_video = false
+        battery_check.setOnCheckedChangeListener { _, isChecked ->
+            check_battery = isChecked
         }
 
         // 调试按钮
@@ -280,7 +273,7 @@ class MainActivity : AppCompatActivity() {
                 }
                 re += "[${count + 1}]: $l "
                 var uptime = if (l.substring(0, l.lastIndexOf("ms")).contains("s")) {
-                    l.substring(0, l.indexOf("s")).toInt() * 1000 + l.substring(l.indexOf("s") +1, l.lastIndexOf("ms")).toInt()
+                    l.substring(0, l.indexOf("s")).toInt() * 1000 + l.substring(l.indexOf("s") + 1, l.lastIndexOf("ms")).toInt()
                 } else {
                     l.substring(0, l.lastIndexOf("ms")).toInt()
                 }
@@ -291,7 +284,7 @@ class MainActivity : AppCompatActivity() {
             try {
                 val nf = NumberFormat.getNumberInstance()
                 nf.maximumFractionDigits = 2
-                am_result.text = re + " [Average]: ${nf.format((sum/count).toFloat())}ms"
+                am_result.text = re + " [Average]: ${nf.format((sum / count).toFloat())}ms"
             } catch (e: ArithmeticException) {
                 am_result.text = re
             }
@@ -340,7 +333,7 @@ class MainActivity : AppCompatActivity() {
             try {
                 val nf = NumberFormat.getNumberInstance()
                 nf.maximumFractionDigits = 2
-                tt_result.text = re + "[Average]: ${nf.format((sum/count).toFloat())}ms"
+                tt_result.text = re + "[Average]: ${nf.format((sum / count).toFloat())}ms"
             } catch (e: ArithmeticException) {
                 tt_result.text = re
             }
@@ -353,7 +346,7 @@ class MainActivity : AppCompatActivity() {
             // 检查设备电量
             batteryLevel = examiner.batteryLevel(this)!!.toInt()
             batteryStatus = examiner.batteryIsCharging(this)
-            if (batteryLevel < highBattery) {
+            if (batteryLevel < highBattery && check_battery) {
                 FileHandler.logger("stable", "Battery is low, refuse to execute.")
                 if (batteryStatus["unPlugged"]!!) {
                     showFeedback("当前电量$batteryLevel%，请插上电源，并等待电池充满后再执行")
@@ -440,7 +433,10 @@ class MainActivity : AppCompatActivity() {
                                         val start = (105..1150).random()
                                         val end = (105..1150).random()
                                         Runtime.getRuntime().exec("input swipe 1760 $start 1760 $end")
-                                        FileHandler.logger("stable", "switch on 频率调整, and change the frequency setting.")
+                                        FileHandler.logger(
+                                            "stable",
+                                            "switch on 频率调整, and change the frequency setting."
+                                        )
                                     } else {
                                         freq_on = false
                                         FileHandler.logger("stable", "switch off 频率调整.")
@@ -463,7 +459,10 @@ class MainActivity : AppCompatActivity() {
                                             sleep(2000)
                                             val x = (230..1048).random()
                                             Runtime.getRuntime().exec("input tap $x 459")
-                                            FileHandler.logger("stable", "switch on 色带调节, turn off auto-adjust and set the threshold.")
+                                            FileHandler.logger(
+                                                "stable",
+                                                "switch on 色带调节, turn off auto-adjust and set the threshold."
+                                            )
                                         } else {
                                             Runtime.getRuntime().exec("input tap 1026 326")
                                             auto_on = true
@@ -598,7 +597,13 @@ class MainActivity : AppCompatActivity() {
         return "Unknown"
     }
 
-    private fun processData(index: Int, startLv: Int, endLv: Int, freq: String, map: MutableMap<String, MutableMap<String, Int>>) {
+    private fun processData(
+        index: Int,
+        startLv: Int,
+        endLv: Int,
+        freq: String,
+        map: MutableMap<String, MutableMap<String, Int>>
+    ) {
 //        val simpleDateFormat = SimpleDateFormat("yyyy-MM-dd-HH-mm-ss", Locale.CHINA)
 //        curTime = simpleDateFormat.format(Date())
 //        changeItestDirName()
@@ -759,14 +764,13 @@ class MainActivity : AppCompatActivity() {
 
     // 恢复默认测试配置
     private fun resetBtnSetting() {
-        frequency_default.isChecked = true
-        frequency_define.isChecked = false
+        frequency_switch.isChecked = false
         frequency_btn_isON = false
-        spectrogram_off.isChecked = true
-        spectrogram_on.isChecked = false
+        spectrogram_switch.isChecked = false
         spectrogram_btn_isON = false
-        record_off.isChecked = true
-        record_on.isChecked = false
+        discharge_switch.isChecked = false
+        discharge_btn_isOn = false
+        record_switch.isChecked = false
         record_video = false
     }
 
@@ -809,7 +813,7 @@ class MainActivity : AppCompatActivity() {
                     resetBtnSetting()
                     resetBtnStatus()
                     showFeedback("测试执行完毕.")
-                    launch_btn.isEnabled=true
+                    launch_btn.isEnabled = true
                 }
 //                1 -> {
 //                    try {
@@ -882,14 +886,18 @@ class MainActivity : AppCompatActivity() {
         var loop: Int = 0
         var batteryLevel = 0 //设备电量
         var batteryStatus: MutableMap<String, Boolean> = mutableMapOf() //电池信息
+        var check_battery = true
         const val frequency_btn_id = "function_frequency"
         const val spectrogram_btn_id = "function_spectrogram"
+        const val discharge_btn_id = "function_discharge"
         var record_video = false
         var frequency_btn_isON = false
         var spectrogram_btn_isON = false
+        var discharge_btn_isOn = false
         var record_not_begin = true
         var frequency_btn_clickable = true
         var spectrogram_btn_clickable = true
+        var discharge_btn_clickable = true
         const val moveIndicator = "input swipe 1700 832 1700 1085"
         const val recording = "input keyevent --longpress 135" //DP200使用AI功能键:135
         const val ACTION = "interrupt signal"

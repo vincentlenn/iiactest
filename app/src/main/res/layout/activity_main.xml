@@ -31,47 +31,44 @@
                             android:layout_height="fill_parent"
                             android:orientation="vertical">
                         <TextView
-                                android:layout_width="match_parent"
-                                android:layout_height="20dp"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
                                 android:layout_marginLeft="50dp"
                                 android:layout_marginTop="20dp"
+                                android:layout_marginBottom="5dp"
                                 android:text="设备信息"
                                 android:textStyle="bold"/>
                         <LinearLayout
-                                xmlns:android="http://schemas.android.com/apk/res/android"
                                 android:id="@+id/android_ver_bar"
-                                android:layout_alignParentTop="true"
-                                android:layout_width="fill_parent"
+                                android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:paddingLeft="50dp"
-                                tools:ignore="MissingConstraints">
+                                android:layout_marginLeft="50dp">
                             <TextView
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
-                                    android:text="Android版本号:   "
+                                    android:text="Android版本号: "
                                     android:layout_alignParentLeft="true"/>
                             <TextView
                                     android:id="@+id/android_version"
                                     android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"/>
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginLeft="10dp"/>
                         </LinearLayout>
                         <LinearLayout
-                                xmlns:android="http://schemas.android.com/apk/res/android"
                                 android:id="@+id/sys_ver_bar"
-                                android:layout_alignParentTop="true"
-                                android:layout_width="fill_parent"
+                                android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:paddingLeft="50dp"
-                                tools:ignore="MissingConstraints">
+                                android:layout_marginLeft="50dp">
                             <TextView
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
-                                    android:text="定制系统版本号:   "
+                                    android:text="定制系统版本号: "
                                     android:layout_alignParentLeft="true"/>
                             <TextView
                                     android:id="@+id/sys_version"
                                     android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"/>
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginLeft="10dp"/>
                             <TextView
                                     android:id="@+id/kernel_version"
                                     android:layout_width="wrap_content"
@@ -80,61 +77,59 @@
                         </LinearLayout>
 
                         <TextView
-                                android:layout_width="match_parent"
-                                android:layout_height="20dp"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
                                 android:layout_marginLeft="50dp"
                                 android:layout_marginTop="20dp"
+                                android:layout_marginBottom="5dp"
                                 android:text="被测应用信息"
                                 android:textStyle="bold"/>
                         <LinearLayout
-                                xmlns:android="http://schemas.android.com/apk/res/android"
                                 android:id="@+id/app_name_bar"
-                                android:layout_alignParentTop="true"
-                                android:layout_width="fill_parent"
+                                android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:paddingLeft="50dp"
-                                tools:ignore="MissingConstraints">
+                                android:layout_marginLeft="50dp">
                             <TextView
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
-                                    android:text="应用包名:   "
+                                    android:text="应用包名: "
                                     android:layout_alignParentLeft="true"/>
                             <TextView
                                     android:id="@+id/pck_name"
                                     android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"/>
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginLeft="10dp"/>
                         </LinearLayout>
                         <LinearLayout
                                 android:id="@+id/app_ver_bar"
-                                android:layout_width="fill_parent"
+                                android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:paddingLeft="50dp"
-                                tools:ignore="MissingConstraints">
+                                android:layout_marginLeft="50dp">
                             <TextView
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
                                     android:layout_alignParentLeft="true"
-                                    android:text="应用版本:   "/>
+                                    android:text="应用版本: "/>
                             <TextView
                                     android:id="@+id/pck_version"
                                     android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"/>
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginLeft="10dp"/>
                         </LinearLayout>
 
                         <TextView
-                                android:layout_width="match_parent"
-                                android:layout_height="20dp"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
                                 android:layout_marginLeft="50dp"
                                 android:layout_marginTop="20dp"
                                 android:text="测试配置"
                                 android:textStyle="bold"/>
 
                         <LinearLayout
-                                android:id="@+id/duration_bar"
-                                android:layout_width="fill_parent"
+                                android:id="@+id/config_bar"
+                                android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:orientation="horizontal"
-                                android:paddingLeft="50dp"
+                                android:layout_marginLeft="50dp"
                                 android:focusable="true"
                                 android:focusableInTouchMode="true">
                             <TextView
@@ -183,108 +178,114 @@
                                     android:hint="3"
                                     android:digits="0123456789"
                                     android:maxLength="3"/>
+                            <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="是否检查电量"
+                                    android:layout_marginLeft="30dp"/>
+                            <Switch
+                                    android:id="@+id/battery_check"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginLeft="5dp"
+                                    android:textColor="@android:color/primary_text_light"
+                                    android:checked="true"/>
                         </LinearLayout>
 
                         <TextView
-                                android:layout_width="match_parent"
-                                android:layout_height="20dp"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
                                 android:layout_marginLeft="50dp"
                                 android:layout_marginTop="20dp"
+                                android:layout_marginBottom="5dp"
                                 android:text="场景配置"
                                 android:textStyle="bold"/>
                         <TextView
-                                android:layout_width="match_parent"
-                                android:layout_height="20dp"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
                                 android:layout_marginLeft="50dp"
-                                android:layout_marginTop="10dp"
-                                android:text="请设置本次测试场景需要使用的参数: "/>
+                                android:text="请设置本次测试场景需要使用的参数"/>
                         <LinearLayout
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
+                                android:layout_marginLeft="50dp"
+                                android:layout_marginTop="5dp"
                                 android:orientation="horizontal">
                             <LinearLayout
                                     android:id="@+id/frequency_setting"
-                                    android:layout_width="fill_parent"
-                                    android:layout_height="wrap_content"
-                                    android:orientation="horizontal"
-                                    android:layout_marginTop="5dp"
-                                    android:paddingLeft="50dp">
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content">
                                 <TextView
                                         android:layout_width="wrap_content"
                                         android:layout_height="wrap_content"
-                                        android:text="频率范围:  "
+                                        android:text="最大频率范围"
                                         android:textStyle="bold"/>
-                                <RadioButton
+                                <Switch
+                                        android:id="@+id/frequency_switch"
                                         android:layout_width="wrap_content"
                                         android:layout_height="wrap_content"
-                                        android:id="@+id/frequency_default"
-                                        android:text="默认"
-                                        android:textColor="@android:color/darker_gray"
-                                        android:checked="true"/>
-                                <RadioButton
-                                        android:layout_width="wrap_content"
-                                        android:layout_height="wrap_content"
-                                        android:id="@+id/frequency_define"
-                                        android:text="最大"
-                                        android:textColor="@android:color/darker_gray"
+                                        android:layout_marginLeft="5dp"
+                                        android:textColor="@android:color/primary_text_light"
                                         android:checked="false"/>
                             </LinearLayout>
 
                             <LinearLayout
                                     android:id="@+id/spectrogram_setting"
-                                    android:layout_width="fill_parent"
+                                    android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
-                                    android:orientation="horizontal"
-                                    android:layout_marginTop="5dp"
-                                    android:paddingLeft="50dp">
+                                    android:layout_marginLeft="30dp">
                                 <TextView
                                         android:layout_width="wrap_content"
                                         android:layout_height="wrap_content"
-                                        android:text="时频图:  "
+                                        android:text="开启时频图"
                                         android:textStyle="bold"/>
-                                <RadioButton
+                                <Switch
+                                        android:id="@+id/spectrogram_switch"
                                         android:layout_width="wrap_content"
                                         android:layout_height="wrap_content"
-                                        android:id="@+id/spectrogram_off"
-                                        android:text="关闭"
-                                        android:textColor="@android:color/darker_gray"
-                                        android:checked="true"/>
-                                <RadioButton
+                                        android:layout_marginLeft="5dp"
+                                        android:textColor="@android:color/primary_text_light"
+                                        android:checked="false"/>
+                            </LinearLayout>
+
+                            <LinearLayout
+                                    android:id="@+id/discharge_setting"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginLeft="30dp">
+                                <TextView
                                         android:layout_width="wrap_content"
                                         android:layout_height="wrap_content"
-                                        android:id="@+id/spectrogram_on"
-                                        android:text="开启"
-                                        android:textColor="@android:color/darker_gray"
+                                        android:text="开启局放图谱"
+                                        android:textStyle="bold"/>
+                                <Switch
+                                        android:id="@+id/discharge_switch"
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:layout_marginLeft="5dp"
+                                        android:textColor="@android:color/primary_text_light"
                                         android:checked="false"/>
                             </LinearLayout>
 
                             <LinearLayout
                                     android:id="@+id/record_setting"
-                                    android:layout_width="fill_parent"
+                                    android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
-                                    android:orientation="horizontal"
-                                    android:layout_marginTop="5dp"
-                                    android:paddingLeft="50dp">
+                                    android:layout_marginLeft="30dp">
                                 <TextView
                                         android:layout_width="wrap_content"
                                         android:layout_height="wrap_content"
-                                        android:text="录像:  "
+                                        android:text="开启录像"
                                         android:textStyle="bold"/>
-                                <RadioButton
+                                <Switch
+                                        android:id="@+id/record_switch"
                                         android:layout_width="wrap_content"
                                         android:layout_height="wrap_content"
-                                        android:id="@+id/record_off"
-                                        android:text="关闭"
-                                        android:textColor="@android:color/darker_gray"
-                                        android:checked="true"/>
-                                <RadioButton
-                                        android:layout_width="wrap_content"
-                                        android:layout_height="wrap_content"
-                                        android:id="@+id/record_on"
-                                        android:text="开启"
-                                        android:textColor="@android:color/darker_gray"
+                                        android:layout_marginLeft="5dp"
+                                        android:textColor="@android:color/primary_text_light"
                                         android:checked="false"/>
                             </LinearLayout>
+
                         </LinearLayout>
 
                         <Button
