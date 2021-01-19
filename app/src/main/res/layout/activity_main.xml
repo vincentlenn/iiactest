@@ -184,7 +184,7 @@
                                     android:text="是否检查电量"
                                     android:layout_marginLeft="30dp"/>
                             <Switch
-                                    android:id="@+id/battery_check"
+                                    android:id="@+id/battery_check_perf"
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
                                     android:layout_marginLeft="5dp"
@@ -397,35 +397,49 @@
                         android:layout_height="wrap_content"
                         android:id="@+id/tab3">
                 <LinearLayout
-                        android:layout_width="fill_parent"
-                        android:layout_height="fill_parent"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginLeft="50dp"
                         android:orientation="vertical">
                     <TextView
-                            android:layout_width="match_parent"
-                            android:layout_height="20dp"
-                            android:layout_marginLeft="50dp"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
                             android:layout_marginTop="20dp"
                             android:text="执行说明："
                             android:textStyle="bold"/>
                     <TextView
-                            android:layout_width="match_parent"
-                            android:layout_height="match_parent"
-                            android:layout_marginLeft="50dp"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
                             android:layout_marginTop="10dp"
                             android:text="@string/stable_test"
                             android:textColor="@android:color/darker_gray"/>
+                    <LinearLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:layout_marginTop="10dp">
+                        <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="是否检查电量"/>
+                        <Switch
+                                android:id="@+id/battery_check_stable"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginLeft="5dp"
+                                android:textColor="@android:color/primary_text_light"
+                                android:checked="true"/>
+                    </LinearLayout>
                     <Button
                             android:id="@+id/stable_btn"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="开始执行"
-                            android:layout_marginLeft="50dp"
                             android:layout_marginTop="10dp"/>
                     <TextView
                             android:id="@+id/message"
-                            android:layout_width="match_parent"
-                            android:layout_height="20dp"
-                            android:layout_marginLeft="50dp"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
                             android:layout_marginTop="20dp"
                             android:text=" 执行完成 "
                             android:textStyle="bold"

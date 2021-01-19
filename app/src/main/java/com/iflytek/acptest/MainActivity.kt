@@ -99,7 +99,7 @@ class MainActivity : AppCompatActivity() {
             // 检查电池信息并判断是否执行测试
             batteryLevel = examiner.batteryLevel(this)!!.toInt()
             batteryStatus = examiner.batteryIsCharging(this)
-            if (batteryLevel < highBattery && check_battery) {
+            if (batteryLevel < highBattery && perf_check_battery) {
                 FileHandler.logger("perf", "Battery is low, refuse to execute.")
                 if (batteryStatus["unPlugged"]!!)
                     showFeedback("当前电量$batteryLevel%，请插上电源，并等待电池充满后再执行")
@@ -206,8 +206,12 @@ class MainActivity : AppCompatActivity() {
             record_video = isChecked
         }
 
-        battery_check.setOnCheckedChangeListener { _, isChecked ->
-            check_battery = isChecked
+        battery_check_perf.setOnCheckedChangeListener { _, isChecked ->
+            perf_check_battery = isChecked
+        }
+
+        battery_check_stable.setOnCheckedChangeListener { _, isChecked ->
+            stable_check_battery = isChecked
         }
 
         // 调试按钮
@@ -346,7 +350,7 @@ class MainActivity : AppCompatActivity() {
             // 检查设备电量
             batteryLevel = examiner.batteryLevel(this)!!.toInt()
             batteryStatus = examiner.batteryIsCharging(this)
-            if (batteryLevel < highBattery && check_battery) {
+            if (batteryLevel < highBattery && stable_check_battery) {
                 FileHandler.logger("stable", "Battery is low, refuse to execute.")
                 if (batteryStatus["unPlugged"]!!) {
                     showFeedback("当前电量$batteryLevel%，请插上电源，并等待电池充满后再执行")
@@ -416,7 +420,10 @@ class MainActivity : AppCompatActivity() {
                         super.run()
                         entryApp("stable")
                         sleep(10000)
+                        Runtime.getRuntime().exec("input tap 40 40") // 收起iTest悬浮窗
                         var freq_on = false
+                        var freq_pos_default = true
+                        var freq_start_y = 835
                         var color_on = false
                         var auto_on = true
                         while (true) {
@@ -424,15 +431,21 @@ class MainActivity : AppCompatActivity() {
                                 FileHandler.logger("stable", "battery low, end the stable test.")
                                 break
                             }
-                            when ((0..7).random()) {
+                            when ((0..10).random()) {
+                                // 开关&设置频率范围
                                 0 -> {
-                                    Runtime.getRuntime().exec("input tap 100 350")
+                                    Runtime.getRuntime().exec("input tap 100 240")
                                     if (!freq_on) {
                                         freq_on = true
                                         sleep(2000)
-                                        val start = (105..1150).random()
-                                        val end = (105..1150).random()
-                                        Runtime.getRuntime().exec("input swipe 1760 $start 1760 $end")
+                                        val end = (835..1084).random()
+                                        if (freq_pos_default) {
+                                            Runtime.getRuntime().exec("input swipe 1760 $freq_start_y 1760 $end")
+                                            freq_pos_default = false
+                                        } else {
+                                            Runtime.getRuntime().exec("input swipe 1760 $freq_start_y 1760 $end")
+                                        }
+                                        freq_start_y = end
                                         FileHandler.logger(
                                             "stable",
                                             "switch on 频率调整, and change the frequency setting."
@@ -442,29 +455,32 @@ class MainActivity : AppCompatActivity() {
                                         FileHandler.logger("stable", "switch off 频率调整.")
                                     }
                                 }
+                                // 开关时频图
                                 1 -> {
-                                    Runtime.getRuntime().exec("input tap 100 470")
+                                    Runtime.getRuntime().exec("input tap 100 800")
                                     FileHandler.logger("stable", "switch on/off 时频图.")
                                 }
+                                // 开关瞬态模式
                                 2 -> {
-                                    Runtime.getRuntime().exec("input tap 100 600")
+                                    Runtime.getRuntime().exec("input tap 100 360")
                                     FileHandler.logger("stable", "switch on/off 瞬态模式.")
                                 }
+                                // 开关&设置色带范围
                                 3 -> {
-                                    Runtime.getRuntime().exec("input tap 100 740")
+                                    Runtime.getRuntime().exec("input tap 100 500")
                                     if (!color_on) {
                                         if (auto_on) {
-                                            Runtime.getRuntime().exec("input tap 1026 326")
+                                            Runtime.getRuntime().exec("input tap 724 322")
                                             auto_on = false
                                             sleep(2000)
-                                            val x = (230..1048).random()
-                                            Runtime.getRuntime().exec("input tap $x 459")
+                                            val x = (246..749).random()
+                                            Runtime.getRuntime().exec("input tap $x 458")
                                             FileHandler.logger(
                                                 "stable",
                                                 "switch on 色带调节, turn off auto-adjust and set the threshold."
                                             )
                                         } else {
-                                            Runtime.getRuntime().exec("input tap 1026 326")
+                                            Runtime.getRuntime().exec("input tap 724 322")
                                             auto_on = true
                                             FileHandler.logger("stable", "switch on 色带调节, turn on auto-adjust.")
                                         }
@@ -473,28 +489,62 @@ class MainActivity : AppCompatActivity() {
                                         FileHandler.logger("stable", "switch off 色带调节.")
                                     }
                                 }
+                                // 打开历史记录
                                 4 -> {
-                                    Runtime.getRuntime().exec("input tap 100 860")
+                                    Runtime.getRuntime().exec("input tap 100 950")
                                     FileHandler.logger("stable", "goto 历史记录.")
-                                    sleep(10000)
-                                    Runtime.getRuntime().exec("input tap 30 110")
+                                    sleep(5000)
+                                    Runtime.getRuntime().exec("input tap 40 115")
                                     FileHandler.logger("stable", "go back to MainActivity.")
                                 }
+                                // 拍照并添加备注
                                 5 -> {
                                     Runtime.getRuntime().exec("input keyevent 135")
                                     FileHandler.logger("stable", "take a photo.")
+                                    sleep(1000)
+                                    Runtime.getRuntime().exec("input tap 179 1135")
+                                    sleep(1000)
+                                    Runtime.getRuntime().exec("input text Hello")
+                                    sleep(3000)
+                                    Runtime.getRuntime().exec("input tap 1334 470")
+                                    FileHandler.logger("stable", "add a comment on photo.")
                                 }
+                                // 录像
                                 6 -> {
                                     Runtime.getRuntime().exec("input keyevent --longpress 135")
                                     sleep(10000)
                                     Runtime.getRuntime().exec("input keyevent --longpress 135")
                                     FileHandler.logger("stable", "take a video.")
                                 }
+                                // 熄屏&亮屏
                                 7 -> {
                                     Runtime.getRuntime().exec("input keyevent 26")
                                     sleep(5000)
                                     Runtime.getRuntime().exec("input keyevent 26")
                                     FileHandler.logger("stable", "turn the screen off and then light up.")
+                                }
+                                // 开关局放图谱
+                                8 -> {
+                                    Runtime.getRuntime().exec("input tap 100 650")
+                                    FileHandler.logger("stable", "switch on/off 局放图谱.")
+                                }
+                                // 打开设置
+                                9 -> {
+                                    Runtime.getRuntime().exec("input tap 590 30")
+                                    FileHandler.logger("stable", "goto 设置.")
+                                    sleep(5000)
+                                    Runtime.getRuntime().exec("input tap 40 115")
+                                    FileHandler.logger("stable", "go back to MainActivity.")
+                                }
+                                // 打开亮度调节
+                                10 -> {
+                                    Runtime.getRuntime().exec("input tap 510 30")
+                                    var x = (520..1210).random()
+                                    Runtime.getRuntime().exec("input tap $x 178")
+                                    FileHandler.logger("stable", "switch on 亮度调节 and change the value.")
+                                    sleep(3000)
+                                    Runtime.getRuntime().exec("input tap 510 30")
+                                    FileHandler.logger("stable", "switch off 亮度调节.")
                                 }
                             }
                             sleep(15000)
@@ -886,7 +936,8 @@ class MainActivity : AppCompatActivity() {
         var loop: Int = 0
         var batteryLevel = 0 //设备电量
         var batteryStatus: MutableMap<String, Boolean> = mutableMapOf() //电池信息
-        var check_battery = true
+        var perf_check_battery = true
+        var stable_check_battery = true
         const val frequency_btn_id = "function_frequency"
         const val spectrogram_btn_id = "function_spectrogram"
         const val discharge_btn_id = "function_discharge"
