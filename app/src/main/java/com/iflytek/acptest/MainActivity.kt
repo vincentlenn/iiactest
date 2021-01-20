@@ -676,7 +676,12 @@ class MainActivity : AppCompatActivity() {
         } else {
             "不录像"
         }
-        val scenario = "本次测试场景配置: $frequencyStatus, $spectrogramStatus, $recordStatus."
+        val dischargeStatus = if (discharge_btn_isOn) {
+            "局放图谱为开启"
+        } else {
+            "局放图谱为关闭"
+        }
+        val scenario = "本次测试场景配置: $frequencyStatus, $spectrogramStatus, $dischargeStatus, $recordStatus."
         FileHandler.writeContents(rFileName, "$scenario\nThis is the $index of $loop. 开始电量: $startLv, 结束电量: $endLv.")
 
         if (calEngineTime.cal(rFileName, log_path, curTime)) {
@@ -809,6 +814,7 @@ class MainActivity : AppCompatActivity() {
         record_not_begin = true
         frequency_btn_clickable = true
         spectrogram_btn_clickable = true
+        discharge_btn_clickable = true
         viewShown = false
     }
 
