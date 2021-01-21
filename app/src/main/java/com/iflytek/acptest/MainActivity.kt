@@ -682,7 +682,7 @@ class MainActivity : AppCompatActivity() {
             "局放图谱为关闭"
         }
         val scenario = "本次测试场景配置: $frequencyStatus, $spectrogramStatus, $dischargeStatus, $recordStatus."
-        FileHandler.writeContents(rFileName, "$scenario\nThis is the $index of $loop. 开始电量: $startLv, 结束电量: $endLv.")
+        FileHandler.writeContents(rFileName, "$scenario\n测试包版本：${getPkgVer(pkgName)}\nThis is the $index of $loop. 开始电量: $startLv, 结束电量: $endLv.")
 
         if (calEngineTime.cal(rFileName, log_path, curTime)) {
             Log.i("Data processor", "Calculate engine time is done.")
@@ -702,6 +702,7 @@ class MainActivity : AppCompatActivity() {
     private fun processStableData() {
         val rFileName = op_path + File.separatorChar + "Stable_Results-$curTime$fileSuffix"
         mkFile(rFileName)
+        FileHandler.writeContents(rFileName, "本次测试包版本：${getPkgVer(pkgName)}\n")
         if (calEngineTime.cal(rFileName, log_path, curTime)) {
             FileHandler.logger("stable", "Calculate engine time is done.")
             dataProcessor.calPerfData(rFileName, curTime)
